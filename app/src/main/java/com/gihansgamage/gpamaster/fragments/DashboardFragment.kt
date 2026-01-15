@@ -5,9 +5,9 @@ import android.os.Bundle
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.Fragment
-import com.example.gpamaster.R
-import com.example.gpamaster.activities.SemesterActivity
-import com.example.gpamaster.utils.PrefManager
+import com.gihansgamage.gpamaster.R
+import com.gihansgamage.gpamaster.activities.SemesterActivity
+import com.gihansgamage.gpamaster.utils.PrefManager
 
 class DashboardFragment : Fragment() {
 

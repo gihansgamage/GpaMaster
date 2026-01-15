@@ -3,10 +3,10 @@ package com.gihansgamage.gpamaster.activities
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.gpamaster.R
-import com.example.gpamaster.models.Subject
-import com.example.gpamaster.utils.GPAUtils
-import com.example.gpamaster.utils.PrefManager
+import com.gihansgamage.gpamaster.R
+import com.gihansgamage.gpamaster.models.Subject
+import com.gihansgamage.gpamaster.utils.GPAUtils
+import com.gihansgamage.gpamaster.utils.PrefManager
 
 class SemesterActivity : AppCompatActivity() {
 

@@ -1,63 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/bg_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <LinearLayout
+        android:padding="24dp"
         android:orientation="vertical"
-        android:padding="20dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <TextView
-            android:text="GPA Master 🎓"
-            android:textSize="24sp"
+            android:text="GPA Master"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <EditText
-            android:id="@+id/etName"
-            android:hint="Your Name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <TextView
-            android:text="GPA Scale"
+            android:textColor="@color/text_primary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-        <Spinner
-            android:id="@+id/spScale"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
         <TextView
-            android:text="Number of Years"
+            android:text="Smart academic tracking"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="24dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-        <Spinner
-            android:id="@+id/spYears"
+        <!-- Card -->
+        <LinearLayout
+            android:background="@drawable/card_bg"
+            android:padding="20dp"
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:text="Semesters per Year"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            <EditText
+                android:id="@+id/etName"
+                android:hint="Your name"
+                android:background="@drawable/field_bg"
+                android:padding="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
 
-        <Spinner
-            android:id="@+id/spSemesters"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            <Spinner
+                android:id="@+id/spScale"
+                android:background="@drawable/field_bg"
+                android:layout_marginTop="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
 
-        <Button
-            android:id="@+id/btnSave"
-            android:text="Save & Continue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            <Spinner
+                android:id="@+id/spYears"
+                android:background="@drawable/field_bg"
+                android:layout_marginTop="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <Spinner
+                android:id="@+id/spSemesters"
+                android:background="@drawable/field_bg"
+                android:layout_marginTop="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:id="@+id/btnSave"
+                android:text="Continue"
+                android:textColor="@android:color/white"
+                android:background="@drawable/primary_btn"
+                android:layout_marginTop="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

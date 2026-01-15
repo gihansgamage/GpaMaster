@@ -3,10 +3,10 @@ package com.gihansgamage.gpamaster.activities
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.example.gpamaster.R
-import com.example.gpamaster.fragments.AnalyticsFragment
-import com.example.gpamaster.fragments.DashboardFragment
-import com.example.gpamaster.fragments.SettingsFragment
+import com.gihansgamage.gpamaster.R
+import com.gihansgamage.gpamaster.fragments.AnalyticsFragment
+import com.gihansgamage.gpamaster.fragments.DashboardFragment
+import com.gihansgamage.gpamaster.fragments.SettingsFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {

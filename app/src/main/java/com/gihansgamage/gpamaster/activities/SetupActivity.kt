@@ -4,8 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.gpamaster.R
-import com.example.gpamaster.utils.PrefManager
+import com.gihansgamage.gpamaster.R
+import com.gihansgamage.gpamaster.utils.PrefManager
 
 class SetupActivity : AppCompatActivity() {
 

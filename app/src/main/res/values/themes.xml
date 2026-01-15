@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.GpaMaster" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
 
-    <style name="Theme.GpaMaster" parent="android:Theme.Material.Light.NoActionBar" />
+        <item name="android:windowBackground">@color/bg_main</item>
+        <item name="colorSecondary">@color/primary</item>
+    </style>
 </resources>
