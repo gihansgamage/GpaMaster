@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">GpaMaster</string>
+    <string name="app_name">GPA Master</string>
+    <string name="title_home">Home</string>
+    <string name="title_semesters">Semesters</string>
+    <string name="title_analytics">Analytics</string>
+    <string name="title_settings">Settings</string>
 </resources>
