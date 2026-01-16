@@ -3,6 +3,7 @@ package com.gihansgamage.gpamaster.fragments
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -50,6 +51,8 @@ class SemestersFragment : Fragment() {
         val years = prefs.getYears()
         val semestersPerYear = prefs.getSemestersPerYear()
         val scale = prefs.getScale()
+
+        Log.d("SemestersFragment", "Generating for $years years, $semestersPerYear semesters/year")
 
         // Group by years
         for (y in 1..years) {
@@ -116,7 +119,7 @@ class SemestersFragment : Fragment() {
             yearCard.addView(yearCardContent)
             binding.semesterContainer.addView(yearCard)
 
-            // Semester buttons
+            // Semester buttons - ONLY for semesters that should exist
             for (s in 1..semestersPerYear) {
                 val semester = semesterManager.getOrCreateSemester(y, s)
 
@@ -148,6 +151,8 @@ class SemestersFragment : Fragment() {
                 binding.semesterContainer.addView(btn)
             }
         }
+
+        Log.d("SemestersFragment", "Generated ${years * semestersPerYear} semester buttons")
     }
 
     private fun getSemesterGPAColor(gpa: Double): Int {

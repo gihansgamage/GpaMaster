@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.gihansgamage.gpamaster.databinding.ActivityMainBinding
-import com.gihansgamage.gpamaster.fragments.AnalyticsFragment
 import com.gihansgamage.gpamaster.fragments.HomeFragment
 import com.gihansgamage.gpamaster.fragments.SemestersFragment
 import com.gihansgamage.gpamaster.fragments.SettingsFragment
@@ -39,10 +38,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.nav_semesters -> {
                     loadFragment(SemestersFragment())
-                    true
-                }
-                R.id.nav_analytics -> {
-                    loadFragment(AnalyticsFragment())
                     true
                 }
                 R.id.nav_settings -> {
