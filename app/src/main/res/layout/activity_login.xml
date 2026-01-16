@@ -102,7 +102,11 @@
             android:layout_height="56dp"
             android:layout_marginTop="16dp"
             android:text="Get Started"
-            android:textSize="18sp" />
+            android:textSize="18sp"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/purple_500"
+            app:backgroundTint="@color/purple_500"/>
+
 
     </LinearLayout>
 </ScrollView>

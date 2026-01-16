@@ -155,8 +155,10 @@
                             android:layout_marginEnd="8dp"
                             android:text="Add Grade"
                             android:textAllCaps="false"
-                            android:backgroundTint="@color/primary"
-                            style="?android:attr/borderlessButtonStyle" />
+                            android:backgroundTint="@color/white"
+                            app:backgroundTint="@color/white"
+                            app:cornerRadius="24dp"
+                            style="?android:attr/buttonStyleInset" />
 
                         <Button
                             android:id="@+id/btn_view_all"
@@ -166,8 +168,8 @@
                             android:layout_marginStart="8dp"
                             android:text="View All"
                             android:textAllCaps="false"
-                            android:backgroundTint="@color/accent"
-                            style="?android:attr/borderlessButtonStyle" />
+                            android:backgroundTint="@color/white"
+                            style="?android:attr/buttonStyleInset" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
