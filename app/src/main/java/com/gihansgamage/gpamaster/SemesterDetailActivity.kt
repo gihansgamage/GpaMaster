@@ -97,14 +97,10 @@ class SemesterDetailActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         try {
-            binding.fabAddSubject.setOnClickListener {
-                Log.d("SemesterDetail", "FAB clicked")
+            // Add Subject button - main way to add subjects
+            binding.btnAddSubject.setOnClickListener {
+                Log.d("SemesterDetail", "Add Subject button clicked")
                 showAddSubjectDialog()
-            }
-
-            binding.btnCalculate.setOnClickListener {
-                updateGPADisplay()
-                Toast.makeText(this, "GPA Updated!", Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             Log.e("SemesterDetail", "Error setting up click listeners", e)
