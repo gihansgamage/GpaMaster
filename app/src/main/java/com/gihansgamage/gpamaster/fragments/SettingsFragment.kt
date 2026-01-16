@@ -236,7 +236,7 @@ class SettingsFragment : Fragment() {
     private fun showAboutDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("About GPA Master")
-            .setMessage("GPA Master v1.0\n\nA comprehensive GPA calculator for university students supporting multiple grading scales:\n\n• 4.0 Scale\n• 5.0 Scale\n• 10.0 Scale\n• Percentage Scale\n\nFeatures:\n• Track multiple semesters\n• Calculate semester and overall GPA\n• Visual analytics and progress tracking\n• Flexible program structure\n\nDeveloped to help students monitor their academic progress effectively.")
+            .setMessage("GPA Master v1.0\nDeveloped by Gihan S Gamage\n\nA comprehensive GPA calculator for university students supporting multiple grading scales:\n\n• 4.0 Scale\n• 5.0 Scale\n• 10.0 Scale\n• Percentage Scale\n\nFeatures:\n• Track multiple semesters\n• Calculate semester and overall GPA\n• Visual analytics and progress tracking\n• Flexible program structure\n\nDeveloped to help students monitor their academic progress effectively.")
             .setPositiveButton("OK", null)
             .show()
     }
