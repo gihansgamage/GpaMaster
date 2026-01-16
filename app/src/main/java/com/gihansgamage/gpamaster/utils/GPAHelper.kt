@@ -1,7 +1,8 @@
-package com.example.gpamaster.utils
+package com.gihansgamage.gpamaster.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.gihansgamage.gpamaster.models.Subject
 
 object GPAHelper {
 

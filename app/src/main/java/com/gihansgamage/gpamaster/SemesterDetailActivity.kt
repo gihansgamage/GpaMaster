@@ -10,6 +10,7 @@ import com.gihansgamage.gpamaster.databinding.DialogAddSubjectBinding
 import com.gihansgamage.gpamaster.models.Subject
 import com.gihansgamage.gpamaster.utils.GPAHelper
 import com.gihansgamage.gpamaster.utils.SharedPrefHelper
+import android.widget.ArrayAdapter
 
 class SemesterDetailActivity : AppCompatActivity() {
 

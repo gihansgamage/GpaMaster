@@ -1,16 +1,11 @@
 package com.gihansgamage.gpamaster.models
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "subjects")
+// Make sure you are in the correct file, likely Subject.kt
 data class Subject(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    val id: Long = 0, // Keep the id if you have it
     val semesterId: Int,
     val name: String,
     val credits: Double,
     val grade: String,
-    val percentage: Double? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val percentage: Double? = null // Add this line
 )
