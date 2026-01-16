@@ -11,8 +11,21 @@ import com.gihansgamage.gpamaster.utils.PrefsHelper
 
 class LoginActivity : AppCompatActivity() {
 
+    private lateinit var prefs: PrefsHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        prefs = PrefsHelper(this)
+
+        // Check if setup is already completed
+        if (prefs.isSetupCompleted()) {
+            // Setup already done, go directly to MainActivity
+            navigateToMainActivity()
+            return
+        }
+
+        // First time setup - show the login screen
         setContentView(R.layout.activity_login)
 
         val etName = findViewById<EditText>(R.id.et_name)
@@ -53,7 +66,7 @@ class LoginActivity : AppCompatActivity() {
         spinnerSemesters.adapter = semesterAdapter
 
         // Set default selections
-        spinnerScale.setSelection(0)
+        spinnerScale.setSelection(0) // 4.0 Scale
         spinnerYears.setSelection(3) // 4 years
         spinnerSemesters.setSelection(1) // 2 semesters per year
 
@@ -78,16 +91,19 @@ class LoginActivity : AppCompatActivity() {
             val semestersPerYear = spinnerSemesters.selectedItemPosition + 1
 
             // Save to preferences
-            val prefs = PrefsHelper(this)
             prefs.saveUserName(name)
             prefs.saveScale(scale)
             prefs.saveYears(years)
             prefs.saveSemestersPerYear(semestersPerYear)
-            prefs.saveSetupCompleted(true)
+            prefs.saveSetupCompleted(true) // Mark setup as completed
 
             // Go to main activity
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
+            navigateToMainActivity()
         }
+    }
+
+    private fun navigateToMainActivity() {
+        startActivity(Intent(this, MainActivity::class.java))
+        finish() // Close LoginActivity so user can't go back to it
     }
 }

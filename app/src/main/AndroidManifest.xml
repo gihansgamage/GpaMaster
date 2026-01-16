@@ -11,6 +11,7 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:targetApi="31">
 
+        <!-- LoginActivity - First screen (checks if setup is done) -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -20,9 +21,16 @@
             </intent-filter>
         </activity>
 
+        <!-- MainActivity - Main app screen -->
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+
+        <!-- SemesterDetailActivity - Individual semester management -->
+        <activity
+            android:name=".SemesterDetailActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
 
     </application>
 

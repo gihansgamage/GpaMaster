@@ -9,15 +9,17 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.gihansgamage.gpamaster.R
 import com.gihansgamage.gpamaster.databinding.FragmentSimpleAnalyticsBinding
+import com.gihansgamage.gpamaster.utils.GPAHelper
 import com.gihansgamage.gpamaster.utils.PrefsHelper
+import com.gihansgamage.gpamaster.utils.SemesterManager
 
-// Renamed from SimpleAnalyticsFragment to AnalyticsFragment to match MainActivity import
 class AnalyticsFragment : Fragment() {
 
     private var _binding: FragmentSimpleAnalyticsBinding? = null
     private val binding get() = _binding!!
+    private lateinit var prefs: PrefsHelper
+    private lateinit var semesterManager: SemesterManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -25,35 +27,62 @@ class AnalyticsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSimpleAnalyticsBinding.inflate(inflater, container, false)
+        prefs = PrefsHelper(requireContext())
+        semesterManager = SemesterManager(requireContext())
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        loadAnalyticsData()
+        setupCustomChart()
+    }
 
+    override fun onResume() {
+        super.onResume()
         loadAnalyticsData()
         setupCustomChart()
     }
 
     private fun loadAnalyticsData() {
-        val gpaHistory = listOf(3.2, 3.5, 3.4, 3.7, 3.8, 3.9)
-        val creditsHistory = listOf(12.0, 15.0, 14.0, 16.0, 15.0, 16.0)
+        val scale = prefs.getScale()
+        val allSemesters = semesterManager.getAllSemesters()
+            .filter { it.totalCredits > 0 }
+            .sortedWith(compareBy({ it.year }, { it.semesterNumber }))
+
+        if (allSemesters.isEmpty()) {
+            binding.tvMaxGpa.text = "Max GPA: N/A"
+            binding.tvMinGpa.text = "Min GPA: N/A"
+            binding.tvAvgGpa.text = "Average GPA: N/A"
+            binding.tvTotalCredits.text = "Total Credits: 0"
+            binding.tvSemestersCompleted.text = "Semesters Completed: 0"
+            binding.tvTrend.text = "Trend: N/A"
+            return
+        }
+
+        val gpaHistory = allSemesters.map { it.gpa }
+        val creditsHistory = allSemesters.map { it.totalCredits }
 
         val maxGPA = gpaHistory.maxOrNull() ?: 0.0
         val minGPA = gpaHistory.minOrNull() ?: 0.0
         val avgGPA = gpaHistory.average()
         val totalCredits = creditsHistory.sum()
 
-        binding.tvMaxGpa.text = String.format("Max GPA: %.2f", maxGPA)
-        binding.tvMinGpa.text = String.format("Min GPA: %.2f", minGPA)
-        binding.tvAvgGpa.text = String.format("Average GPA: %.2f", avgGPA)
-        binding.tvTotalCredits.text = String.format("Total Credits: %.1f", totalCredits)
+        binding.tvMaxGpa.text = "Max GPA: ${GPAHelper.formatGPA(maxGPA, scale)}"
+        binding.tvMinGpa.text = "Min GPA: ${GPAHelper.formatGPA(minGPA, scale)}"
+        binding.tvAvgGpa.text = "Average GPA: ${GPAHelper.formatGPA(avgGPA, scale)}"
+        binding.tvTotalCredits.text = "Total Credits: ${totalCredits.toInt()}"
         binding.tvSemestersCompleted.text = "Semesters Completed: ${gpaHistory.size}"
 
-        val trend = if (gpaHistory.last() > gpaHistory.first()) {
-            "↗ Improving"
-        } else if (gpaHistory.last() < gpaHistory.first()) {
-            "↘ Declining"
+        // Calculate trend
+        val trend = if (gpaHistory.size >= 2) {
+            val firstGPA = gpaHistory.first()
+            val lastGPA = gpaHistory.last()
+            when {
+                lastGPA > firstGPA + 0.1 -> "↗ Improving"
+                lastGPA < firstGPA - 0.1 -> "↘ Declining"
+                else -> "→ Stable"
+            }
         } else {
             "→ Stable"
         }
@@ -61,17 +90,41 @@ class AnalyticsFragment : Fragment() {
     }
 
     private fun setupCustomChart() {
-        val gpaData = listOf(3.2, 3.5, 3.4, 3.7, 3.8, 3.9)
-        val container = binding.chartContainer
+        val scale = prefs.getScale()
+        val maxScale = when (scale) {
+            "4.0" -> 4.0
+            "5.0" -> 5.0
+            "10.0" -> 10.0
+            else -> 4.0
+        }
 
+        val allSemesters = semesterManager.getAllSemesters()
+            .filter { it.totalCredits > 0 }
+            .sortedWith(compareBy({ it.year }, { it.semesterNumber }))
+
+        val container = binding.chartContainer
         container.removeAllViews()
 
-        val maxGPA = 4.0
-        val barWidth = 60.dpToPx()
+        if (allSemesters.isEmpty()) {
+            val emptyText = TextView(requireContext()).apply {
+                text = "No data to display yet"
+                textSize = 16f
+                setTextColor(Color.GRAY)
+                gravity = Gravity.CENTER
+                setPadding(32, 32, 32, 32)
+            }
+            container.addView(emptyText)
+            return
+        }
+
+        val barWidth = 80.dpToPx()
         val maxBarHeight = 150.dpToPx()
 
-        for ((index, gpa) in gpaData.withIndex()) {
-            val barView = createBarView(gpa, maxGPA, index + 1, maxBarHeight, barWidth)
+        for (semester in allSemesters) {
+            val gpa = semester.gpa
+            val label = "Y${semester.year}S${semester.semesterNumber}"
+
+            val barView = createBarView(gpa, maxScale, label, maxBarHeight, barWidth)
             container.addView(barView)
         }
     }
@@ -79,13 +132,12 @@ class AnalyticsFragment : Fragment() {
     private fun createBarView(
         gpa: Double,
         maxGPA: Double,
-        semester: Int,
+        label: String,
         maxHeight: Int,
         width: Int
     ): View {
-        val barHeight = ((gpa / maxGPA) * maxHeight).toInt()
+        val barHeight = ((gpa / maxGPA) * maxHeight).toInt().coerceAtLeast(20)
 
-        // Fixed: Changed from TextView to LinearLayout to support addView()
         val barContainer = LinearLayout(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT)
             orientation = LinearLayout.VERTICAL
@@ -102,10 +154,11 @@ class AnalyticsFragment : Fragment() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            text = "S$semester\n${String.format("%.1f", gpa)}"
+            text = "$label\n${String.format("%.2f", gpa)}"
             textSize = 10f
             textAlignment = View.TEXT_ALIGNMENT_CENTER
             setTextColor(Color.BLACK)
+            setPadding(4, 8, 4, 4)
         }
 
         barContainer.addView(barView)

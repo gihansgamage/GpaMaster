@@ -52,6 +52,7 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation(libs.androidx.room.common.jvm)
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Remove navigation if causing issues
     // implementation("androidx.navigation:navigation-fragment-ktx:2.7.5")

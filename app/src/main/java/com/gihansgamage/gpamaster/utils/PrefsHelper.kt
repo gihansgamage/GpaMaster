@@ -22,6 +22,18 @@ class PrefsHelper(context: Context) {
     fun saveSetupCompleted(completed: Boolean) = prefs.edit().putBoolean("setup_completed", completed).apply()
     fun isSetupCompleted(): Boolean = prefs.getBoolean("setup_completed", false)
 
+    // Generic String Methods (for SemesterManager)
+    fun saveString(key: String, value: String) = prefs.edit().putString(key, value).apply()
+    fun getString(key: String, defaultValue: String = ""): String = prefs.getString(key, defaultValue) ?: defaultValue
+
+    // Generic Int Methods
+    fun saveInt(key: String, value: Int) = prefs.edit().putInt(key, value).apply()
+    fun getInt(key: String, defaultValue: Int = 0): Int = prefs.getInt(key, defaultValue)
+
+    // Generic Boolean Methods
+    fun saveBoolean(key: String, value: Boolean) = prefs.edit().putBoolean(key, value).apply()
+    fun getBoolean(key: String, defaultValue: Boolean = false): Boolean = prefs.getBoolean(key, defaultValue)
+
     // Clear all data
     fun clearAll() = prefs.edit().clear().apply()
 }

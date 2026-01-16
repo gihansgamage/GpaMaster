@@ -1,21 +1,27 @@
 package com.gihansgamage.gpamaster.fragments
 
 import android.app.AlertDialog
-import android.content.Intent // Resolved: Added missing import
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Spinner
 import androidx.fragment.app.Fragment
 import com.gihansgamage.gpamaster.LoginActivity
 import com.gihansgamage.gpamaster.databinding.FragmentSettingsBinding
-import com.gihansgamage.gpamaster.utils.SharedPrefHelper
+import com.gihansgamage.gpamaster.utils.PrefsHelper
+import com.gihansgamage.gpamaster.utils.SemesterManager
 
 class SettingsFragment : Fragment() {
 
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
-    private lateinit var sharedPrefHelper: SharedPrefHelper
+    private lateinit var prefs: PrefsHelper
+    private lateinit var semesterManager: SemesterManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -23,22 +29,22 @@ class SettingsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        prefs = PrefsHelper(requireContext())
+        semesterManager = SemesterManager(requireContext())
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        sharedPrefHelper = SharedPrefHelper(requireContext())
         loadCurrentSettings()
         setupClickListeners()
     }
 
     private fun loadCurrentSettings() {
-        val userName = sharedPrefHelper.getString("user_name", "Student")
-        val scale = sharedPrefHelper.getString("gpa_scale", "4.0")
-        val years = sharedPrefHelper.getInt("total_years", 4)
-        val semestersPerYear = sharedPrefHelper.getInt("semesters_per_year", 2)
+        val userName = prefs.getUserName()
+        val scale = prefs.getScale()
+        val years = prefs.getYears()
+        val semestersPerYear = prefs.getSemestersPerYear()
 
         binding.tvCurrentName.text = "Name: $userName"
         binding.tvCurrentScale.text = "Scale: $scale"
@@ -73,19 +79,39 @@ class SettingsFragment : Fragment() {
     }
 
     private fun showEditProfileDialog() {
+        val input = EditText(requireContext()).apply {
+            setText(prefs.getUserName())
+            setPadding(32, 32, 32, 32)
+        }
+
         AlertDialog.Builder(requireContext())
-            .setTitle("Edit Profile")
-            .setMessage("This feature is under development")
-            .setPositiveButton("OK", null)
+            .setTitle("Edit Your Name")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val newName = input.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    prefs.saveUserName(newName)
+                    loadCurrentSettings()
+                }
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
     private fun showChangeScaleDialog() {
         val scales = arrayOf("4.0 Scale", "5.0 Scale", "10.0 Scale", "Percentage Scale")
+        val currentScale = prefs.getScale()
+        val currentIndex = when (currentScale) {
+            "4.0" -> 0
+            "5.0" -> 1
+            "10.0" -> 2
+            "percentage" -> 3
+            else -> 0
+        }
 
         AlertDialog.Builder(requireContext())
             .setTitle("Change GPA Scale")
-            .setItems(scales) { _, which ->
+            .setSingleChoiceItems(scales, currentIndex) { dialog, which ->
                 val selectedScale = when (which) {
                     0 -> "4.0"
                     1 -> "5.0"
@@ -93,25 +119,92 @@ class SettingsFragment : Fragment() {
                     3 -> "percentage"
                     else -> "4.0"
                 }
-                sharedPrefHelper.saveString("gpa_scale", selectedScale)
-                loadCurrentSettings()
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Warning")
+                    .setMessage("Changing the scale will affect all GPA calculations. Continue?")
+                    .setPositiveButton("Yes") { _, _ ->
+                        prefs.saveScale(selectedScale)
+                        loadCurrentSettings()
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("No", null)
+                    .show()
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
     private fun showChangeStructureDialog() {
+        val yearsArray = (1..10).map { "$it year${if (it > 1) "s" else ""}" }.toTypedArray()
+        val semestersArray = (1..5).map { "$it semester${if (it > 1) "s" else ""} per year" }.toTypedArray()
+
+        var selectedYears = prefs.getYears()
+        var selectedSemesters = prefs.getSemestersPerYear()
+
+        val dialogView = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 32, 32, 32)
+        }
+
+        val yearsText = android.widget.TextView(requireContext()).apply {
+            text = "Number of Years"
+            textSize = 16f
+        }
+        dialogView.addView(yearsText)
+
+        val yearsSpinner = Spinner(requireContext()).apply {
+            adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, yearsArray).apply {
+                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
+            setSelection(selectedYears - 1)
+            onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    selectedYears = position + 1
+                }
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+            }
+        }
+        dialogView.addView(yearsSpinner)
+
+        val semestersText = android.widget.TextView(requireContext()).apply {
+            text = "Semesters per Year"
+            textSize = 16f
+            setPadding(0, 24, 0, 0)
+        }
+        dialogView.addView(semestersText)
+
+        val semestersSpinner = Spinner(requireContext()).apply {
+            adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, semestersArray).apply {
+                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
+            setSelection(selectedSemesters - 1)
+            onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    selectedSemesters = position + 1
+                }
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+            }
+        }
+        dialogView.addView(semestersSpinner)
+
         AlertDialog.Builder(requireContext())
-            .setTitle("Change Structure")
-            .setMessage("This feature is under development")
-            .setPositiveButton("OK", null)
+            .setTitle("Change Program Structure")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                prefs.saveYears(selectedYears)
+                prefs.saveSemestersPerYear(selectedSemesters)
+                semesterManager.initializeSemesters()
+                loadCurrentSettings()
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
     private fun exportData() {
         AlertDialog.Builder(requireContext())
             .setTitle("Export Data")
-            .setMessage("This feature is under development")
+            .setMessage("Export feature coming soon! Your data is safely stored in the app.")
             .setPositiveButton("OK", null)
             .show()
     }
@@ -119,8 +212,8 @@ class SettingsFragment : Fragment() {
     private fun showResetConfirmationDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("Reset All Data")
-            .setMessage("Are you sure you want to reset all data? This action cannot be undone.")
-            .setPositiveButton("Reset") { _, _ ->
+            .setMessage("Are you sure you want to reset ALL data? This will delete:\n\n• All semesters\n• All subjects\n• All grades\n• Your profile settings\n\nThis action CANNOT be undone!")
+            .setPositiveButton("Reset Everything") { _, _ ->
                 resetAllData()
             }
             .setNegativeButton("Cancel", null)
@@ -128,9 +221,11 @@ class SettingsFragment : Fragment() {
     }
 
     private fun resetAllData() {
-        sharedPrefHelper.clearAll()
+        // Clear all data
+        semesterManager.resetAllData()
+        prefs.clearAll()
 
-        // Resolved: Fixed Intent initialization and type mismatch for flags
+        // Redirect to login
         val intent = Intent(requireContext(), LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -141,7 +236,7 @@ class SettingsFragment : Fragment() {
     private fun showAboutDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("About GPA Master")
-            .setMessage("GPA Master v1.0\n\nA powerful GPA calculator for university students with multiple grading scales and detailed analytics.")
+            .setMessage("GPA Master v1.0\n\nA comprehensive GPA calculator for university students supporting multiple grading scales:\n\n• 4.0 Scale\n• 5.0 Scale\n• 10.0 Scale\n• Percentage Scale\n\nFeatures:\n• Track multiple semesters\n• Calculate semester and overall GPA\n• Visual analytics and progress tracking\n• Flexible program structure\n\nDeveloped to help students monitor their academic progress effectively.")
             .setPositiveButton("OK", null)
             .show()
     }
