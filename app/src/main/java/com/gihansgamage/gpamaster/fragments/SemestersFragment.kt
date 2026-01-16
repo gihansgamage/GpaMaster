@@ -5,20 +5,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
+import com.gihansgamage.gpamaster.MainActivity
+import com.gihansgamage.gpamaster.R
 import com.gihansgamage.gpamaster.SemesterDetailActivity
-import com.gihansgamage.gpamaster.adapters.SemesterAdapter
 import com.gihansgamage.gpamaster.databinding.FragmentSemestersBinding
-import com.gihansgamage.gpamaster.models.Semester
-import com.gihansgamage.gpamaster.utils.SharedPrefHelper
+import com.gihansgamage.gpamaster.utils.PrefsHelper
 
 class SemestersFragment : Fragment() {
-
     private var _binding: FragmentSemestersBinding? = null
     private val binding get() = _binding!!
-    private lateinit var sharedPrefHelper: SharedPrefHelper
-    private lateinit var semesterAdapter: SemesterAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -26,69 +24,37 @@ class SemestersFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSemestersBinding.inflate(inflater, container, false)
+        val prefs = PrefsHelper(requireContext())
+
+        // Generate dynamic buttons based on user setup (Years * Semesters per year)
+        generateSemesterButtons(prefs.getYears(), prefs.getSemestersPerYear())
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        sharedPrefHelper = SharedPrefHelper(requireContext())
-        setupRecyclerView()
-        loadSemesters()
-    }
-
-    private fun setupRecyclerView() {
-        semesterAdapter = SemesterAdapter(emptyList()) { semester ->
-            val intent = Intent(requireContext(), SemesterDetailActivity::class.java).apply {
-                putExtra("semester_id", semester.id)
-                putExtra("year", semester.year)
-                putExtra("semester_number", semester.semesterNumber)
-            }
-            startActivity(intent)
-        }
-
-        binding.rvSemesters.apply {
-            layoutManager = GridLayoutManager(requireContext(), 3)
-            adapter = semesterAdapter
-        }
-    }
-
-    private fun loadSemesters() {
-        val totalYears = sharedPrefHelper.getInt("total_years", 4)
-        val semestersPerYear = sharedPrefHelper.getInt("semesters_per_year", 2)
-
-        val semesters = mutableListOf<Semester>()
-        var semesterId = 1
-
-        for (year in 1..totalYears) {
-            for (semesterNum in 1..semestersPerYear) {
-                semesters.add(
-                    Semester(
-                        id = semesterId++,
-                        year = year,
-                        semesterNumber = semesterNum,
-                        gpa = 0.0,
-                        totalCredits = 0.0
+    private fun generateSemesterButtons(years: Int, sPerYear: Int) {
+        binding.semesterContainer.removeAllViews()
+        for (y in 1..years) {
+            for (s in 1..sPerYear) {
+                val btn = Button(requireContext()).apply {
+                    val params = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                     )
-                )
+                    params.setMargins(0, 8, 0, 8)
+                    layoutParams = params
+                    text = "Year $y - Semester $s"
+                    isAllCaps = false
+                    setOnClickListener {
+                        val intent = Intent(requireContext(), SemesterDetailActivity::class.java).apply {
+                            putExtra("year", y)
+                            putExtra("semester_number", s)
+                        }
+                        startActivity(intent)
+                    }
+                }
+                binding.semesterContainer.addView(btn)
             }
         }
-
-        semesterAdapter.updateData(semesters)
-
-        // Show/hide empty state
-        if (semesters.isEmpty()) {
-            binding.tvEmptyState.visibility = View.VISIBLE
-            binding.rvSemesters.visibility = View.GONE
-        } else {
-            binding.tvEmptyState.visibility = View.GONE
-            binding.rvSemesters.visibility = View.VISIBLE
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        loadSemesters() // Refresh when returning from detail
     }
 
     override fun onDestroyView() {

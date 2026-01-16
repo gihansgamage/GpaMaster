@@ -9,9 +9,12 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.gihansgamage.gpamaster.R
 import com.gihansgamage.gpamaster.databinding.FragmentSimpleAnalyticsBinding
+import com.gihansgamage.gpamaster.utils.PrefsHelper
 
-class SimpleAnalyticsFragment : Fragment() {
+// Renamed from SimpleAnalyticsFragment to AnalyticsFragment to match MainActivity import
+class AnalyticsFragment : Fragment() {
 
     private var _binding: FragmentSimpleAnalyticsBinding? = null
     private val binding get() = _binding!!
@@ -33,11 +36,9 @@ class SimpleAnalyticsFragment : Fragment() {
     }
 
     private fun loadAnalyticsData() {
-        // Sample data for demonstration
         val gpaHistory = listOf(3.2, 3.5, 3.4, 3.7, 3.8, 3.9)
         val creditsHistory = listOf(12.0, 15.0, 14.0, 16.0, 15.0, 16.0)
 
-        // Calculate statistics
         val maxGPA = gpaHistory.maxOrNull() ?: 0.0
         val minGPA = gpaHistory.minOrNull() ?: 0.0
         val avgGPA = gpaHistory.average()
@@ -49,7 +50,6 @@ class SimpleAnalyticsFragment : Fragment() {
         binding.tvTotalCredits.text = String.format("Total Credits: %.1f", totalCredits)
         binding.tvSemestersCompleted.text = "Semesters Completed: ${gpaHistory.size}"
 
-        // Show trend
         val trend = if (gpaHistory.last() > gpaHistory.first()) {
             "↗ Improving"
         } else if (gpaHistory.last() < gpaHistory.first()) {
@@ -62,14 +62,12 @@ class SimpleAnalyticsFragment : Fragment() {
 
     private fun setupCustomChart() {
         val gpaData = listOf(3.2, 3.5, 3.4, 3.7, 3.8, 3.9)
-        val container = binding.chartContainer // Expected to be a Horizontal ScrollView with a LinearLayout
+        val container = binding.chartContainer
 
-        // Clear existing views
         container.removeAllViews()
 
-        // Create bars for each semester
-        val maxGPA = 4.0 // Assuming a 4.0 scale for calculation
-        val barWidth = 50.dpToPx()
+        val maxGPA = 4.0
+        val barWidth = 60.dpToPx()
         val maxBarHeight = 150.dpToPx()
 
         for ((index, gpa) in gpaData.withIndex()) {
@@ -85,34 +83,31 @@ class SimpleAnalyticsFragment : Fragment() {
         maxHeight: Int,
         width: Int
     ): View {
-        // Corrected: Use LinearLayout instead of TextView to allow adding child views
-        val barContainer = LinearLayout(requireContext()).apply {
-            layoutParams = LinearLayout.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                setMargins(8.dpToPx(), 0, 8.dpToPx(), 0)
-            }
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-        }
-
         val barHeight = ((gpa / maxGPA) * maxHeight).toInt()
 
-        // Create colored bar
+        // Fixed: Changed from TextView to LinearLayout to support addView()
+        val barContainer = LinearLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+        }
+
         val barView = View(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(width / 2, barHeight)
             setBackgroundColor(getBarColor(gpa))
         }
 
-        // Create semester label
         val labelView = TextView(requireContext()).apply {
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             text = "S$semester\n${String.format("%.1f", gpa)}"
             textSize = 10f
-            textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
             setTextColor(Color.BLACK)
-            setPadding(0, 4.dpToPx(), 0, 0)
         }
 
-        // Add views to container
         barContainer.addView(barView)
         barContainer.addView(labelView)
 
@@ -121,10 +116,10 @@ class SimpleAnalyticsFragment : Fragment() {
 
     private fun getBarColor(gpa: Double): Int {
         return when {
-            gpa >= 3.5 -> Color.parseColor("#4CAF50") // Green
-            gpa >= 3.0 -> Color.parseColor("#FF9800") // Orange
-            gpa >= 2.0 -> Color.parseColor("#FFC107") // Yellow
-            else -> Color.parseColor("#F44336") // Red
+            gpa >= 3.5 -> Color.parseColor("#4CAF50")
+            gpa >= 3.0 -> Color.parseColor("#FF9800")
+            gpa >= 2.0 -> Color.parseColor("#FFC107")
+            else -> Color.parseColor("#F44336")
         }
     }
 
