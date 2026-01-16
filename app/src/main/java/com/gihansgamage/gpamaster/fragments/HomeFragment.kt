@@ -4,8 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.gihansgamage.gpamaster.R
+import com.gihansgamage.gpamaster.MainActivity
 import com.gihansgamage.gpamaster.databinding.FragmentHomeBinding
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 
@@ -26,7 +28,6 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         prefsHelper = PrefsHelper(requireContext())
         loadUserData()
         setupClickListeners()
@@ -39,11 +40,10 @@ class HomeFragment : Fragment() {
         val years = prefsHelper.getYears()
         val semestersPerYear = prefsHelper.getSemestersPerYear()
 
-        // Welcome message
         binding.tvWelcome.text = if (userName.isNotEmpty()) "Hi, $userName!" else "Hi, Student!"
         binding.tvScale.text = "Scale: $scale"
 
-        // Load sample data (replace with actual calculations)
+        // Placeholder logic for current progress
         val currentGPA = 3.75
         val totalCredits = 45.0
         val semestersCompleted = 6
@@ -57,43 +57,42 @@ class HomeFragment : Fragment() {
         binding.tvProgressText.text = "$progressPercentage% Complete"
         binding.progressBar.progress = progressPercentage
 
-        // Set progress bar color based on GPA
+        // Dynamic color selection based on GPA
         val progressBarColor = when {
-            currentGPA >= 3.5 -> R.color.gpa_excellent
-            currentGPA >= 3.0 -> R.color.gpa_good
-            currentGPA >= 2.0 -> R.color.gpa_average
-            else -> R.color.gpa_poor
+            currentGPA >= 3.5 -> R.color.green
+            currentGPA >= 3.0 -> R.color.orange
+            currentGPA >= 2.0 -> R.color.yellow
+            else -> R.color.red
         }
+
         binding.progressBar.progressTintList =
-            androidx.core.content.ContextCompat.getColorStateList(requireContext(), progressBarColor)
+            ContextCompat.getColorStateList(requireContext(), progressBarColor)
     }
 
     private fun setupClickListeners() {
         binding.btnAddGrade.setOnClickListener {
-            // Show add grade dialog or navigate to add grade screen
             showAddGradeDialog()
         }
 
         binding.btnViewAll.setOnClickListener {
-            // Navigate to semesters
-            (activity as? com.gihansgamage.gpamaster.MainActivity)?.let { mainActivity ->
-                mainActivity.loadFragment(SemestersFragment())
-                mainActivity.binding.bottomNavigation.selectedItemId = R.id.nav_semesters
-            }
+            navigateToSemesters()
+        }
+    }
+
+    private fun navigateToSemesters() {
+        // Correctly casting activity to MainActivity to access public functions
+        (activity as? MainActivity)?.let { mainActivity ->
+            mainActivity.loadFragment(SemestersFragment())
+            mainActivity.bottomNavigation.selectedItemId = R.id.nav_semesters
         }
     }
 
     private fun showAddGradeDialog() {
-        // Simple dialog for adding grade
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle("Add Grade")
             .setMessage("This will take you to the semester selection screen.")
             .setPositiveButton("Continue") { _, _ ->
-                // Navigate to semesters fragment
-                (activity as? com.gihansgamage.gpamaster.MainActivity)?.let { mainActivity ->
-                    mainActivity.loadFragment(SemestersFragment())
-                    mainActivity.binding.bottomNavigation.selectedItemId = R.id.nav_semesters
-                }
+                navigateToSemesters()
             }
             .setNegativeButton("Cancel", null)
             .show()

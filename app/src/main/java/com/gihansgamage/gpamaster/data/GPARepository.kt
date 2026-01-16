@@ -1,10 +1,11 @@
 package com.gihansgamage.gpamaster.data
 
 import com.gihansgamage.gpamaster.models.Semester
-import com.gihansgamage.gpamaster.models.Subject
 import com.gihansgamage.gpamaster.models.UserData
+import com.gihansgamage.gpamaster.models.Subject
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
+
 
 class GPARepository @Inject constructor(
     private val userDao: UserDao,

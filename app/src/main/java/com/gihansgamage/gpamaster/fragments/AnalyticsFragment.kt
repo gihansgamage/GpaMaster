@@ -2,16 +2,14 @@ package com.gihansgamage.gpamaster.fragments
 
 import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.gihansgamage.gpamaster.R
 import com.gihansgamage.gpamaster.databinding.FragmentSimpleAnalyticsBinding
-import com.gihansgamage.gpamaster.utils.PrefsHelper
-import kotlin.math.max
-import kotlin.math.min
 
 class SimpleAnalyticsFragment : Fragment() {
 
@@ -63,16 +61,15 @@ class SimpleAnalyticsFragment : Fragment() {
     }
 
     private fun setupCustomChart() {
-        // Sample GPA data for 6 semesters
         val gpaData = listOf(3.2, 3.5, 3.4, 3.7, 3.8, 3.9)
-        val container = binding.chartContainer
+        val container = binding.chartContainer // Expected to be a Horizontal ScrollView with a LinearLayout
 
         // Clear existing views
         container.removeAllViews()
 
         // Create bars for each semester
-        val maxGPA = gpaData.maxOrNull() ?: 4.0
-        val barWidth = 40.dpToPx()
+        val maxGPA = 4.0 // Assuming a 4.0 scale for calculation
+        val barWidth = 50.dpToPx()
         val maxBarHeight = 150.dpToPx()
 
         for ((index, gpa) in gpaData.withIndex()) {
@@ -88,24 +85,31 @@ class SimpleAnalyticsFragment : Fragment() {
         maxHeight: Int,
         width: Int
     ): View {
-        val barHeight = ((gpa / maxGPA) * maxHeight).toInt()
-
-        val barContainer = TextView(requireContext()).apply {
-            layoutParams = ViewGroup.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+        // Corrected: Use LinearLayout instead of TextView to allow adding child views
+        val barContainer = LinearLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                setMargins(8.dpToPx(), 0, 8.dpToPx(), 0)
+            }
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
         }
+
+        val barHeight = ((gpa / maxGPA) * maxHeight).toInt()
 
         // Create colored bar
         val barView = View(requireContext()).apply {
-            layoutParams = ViewGroup.LayoutParams(width, barHeight)
+            layoutParams = LinearLayout.LayoutParams(width / 2, barHeight)
             setBackgroundColor(getBarColor(gpa))
         }
 
         // Create semester label
         val labelView = TextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             text = "S$semester\n${String.format("%.1f", gpa)}"
             textSize = 10f
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             setTextColor(Color.BLACK)
+            setPadding(0, 4.dpToPx(), 0, 0)
         }
 
         // Add views to container

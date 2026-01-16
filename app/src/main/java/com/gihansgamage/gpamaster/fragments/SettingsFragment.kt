@@ -1,6 +1,7 @@
 package com.gihansgamage.gpamaster.fragments
 
 import android.app.AlertDialog
+import android.content.Intent // Resolved: Added missing import
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -72,7 +73,6 @@ class SettingsFragment : Fragment() {
     }
 
     private fun showEditProfileDialog() {
-        // Implement edit profile dialog
         AlertDialog.Builder(requireContext())
             .setTitle("Edit Profile")
             .setMessage("This feature is under development")
@@ -101,7 +101,6 @@ class SettingsFragment : Fragment() {
     }
 
     private fun showChangeStructureDialog() {
-        // Implement dialog to change years and semesters
         AlertDialog.Builder(requireContext())
             .setTitle("Change Structure")
             .setMessage("This feature is under development")
@@ -110,7 +109,6 @@ class SettingsFragment : Fragment() {
     }
 
     private fun exportData() {
-        // Implement data export functionality
         AlertDialog.Builder(requireContext())
             .setTitle("Export Data")
             .setMessage("This feature is under development")
@@ -130,10 +128,10 @@ class SettingsFragment : Fragment() {
     }
 
     private fun resetAllData() {
-        // Clear all data and go back to login
         sharedPrefHelper.clearAll()
-        val intent = requireActivity().intent.apply {
-            setClass(requireContext(), LoginActivity::class.java)
+
+        // Resolved: Fixed Intent initialization and type mismatch for flags
+        val intent = Intent(requireContext(), LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         startActivity(intent)

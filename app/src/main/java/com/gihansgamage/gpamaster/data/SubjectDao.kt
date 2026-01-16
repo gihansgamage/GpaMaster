@@ -1,8 +1,8 @@
 package com.gihansgamage.gpamaster.data
 
 import androidx.room.*
-import com.gihansgamage.gpamaster.models.Subject
 import kotlinx.coroutines.flow.Flow
+import com.gihansgamage.gpamaster.models.Subject
 
 @Dao
 interface SubjectDao {
