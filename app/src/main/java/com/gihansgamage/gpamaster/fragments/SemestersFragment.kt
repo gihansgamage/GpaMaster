@@ -17,6 +17,7 @@ import com.gihansgamage.gpamaster.databinding.FragmentSemestersBinding
 import com.gihansgamage.gpamaster.utils.GPAHelper
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 import com.gihansgamage.gpamaster.utils.SemesterManager
+import com.gihansgamage.gpamaster.utils.YearWeightHelper
 
 class SemestersFragment : Fragment() {
     private var _binding: FragmentSemestersBinding? = null
@@ -51,20 +52,51 @@ class SemestersFragment : Fragment() {
         val years = prefs.getYears()
         val semestersPerYear = prefs.getSemestersPerYear()
         val scale = prefs.getScale()
+        val yearWeights = YearWeightHelper.getYearWeights(requireContext())
 
         Log.d("SemestersFragment", "Generating for $years years, $semestersPerYear semesters/year")
 
         // Group by years
         for (y in 1..years) {
-            // Year header
-            val yearHeader = android.widget.TextView(requireContext()).apply {
+            // Year header with weight
+            val yearWeight = yearWeights[y] ?: 0.0
+            val yearHeaderLayout = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                setPadding(16, 24, 16, 8)
+            }
+
+            val yearTitle = android.widget.TextView(requireContext()).apply {
                 text = "Year $y"
                 textSize = 20f
                 setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
                 setTypeface(null, android.graphics.Typeface.BOLD)
-                setPadding(16, 24, 16, 8)
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
             }
-            binding.semesterContainer.addView(yearHeader)
+            yearHeaderLayout.addView(yearTitle)
+
+            val yearWeightBadge = android.widget.TextView(requireContext()).apply {
+                text = "${String.format("%.0f", yearWeight)}%"
+                textSize = 16f
+                setTextColor(Color.WHITE)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                setPadding(16, 8, 16, 8)
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                    cornerRadius = 20f
+                    setColor(ContextCompat.getColor(requireContext(), R.color.accent))
+                }
+            }
+            yearHeaderLayout.addView(yearWeightBadge)
+
+            binding.semesterContainer.addView(yearHeaderLayout)
 
             // Calculate year GPA
             var yearTotalPoints = 0.0
@@ -114,6 +146,16 @@ class SemestersFragment : Fragment() {
                     setTextColor(Color.WHITE)
                 }
                 addView(yearCreditsText)
+
+                // Add weight contribution info
+                val weightContribution = android.widget.TextView(requireContext()).apply {
+                    text = "Contributes ${String.format("%.0f", yearWeight)}% to final GPA"
+                    textSize = 12f
+                    setTextColor(Color.WHITE)
+                    alpha = 0.9f
+                    setPadding(0, 4, 0, 0)
+                }
+                addView(weightContribution)
             }
 
             yearCard.addView(yearCardContent)

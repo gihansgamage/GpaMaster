@@ -10,11 +10,14 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.gihansgamage.gpamaster.LoginActivity
+import com.gihansgamage.gpamaster.R
 import com.gihansgamage.gpamaster.databinding.FragmentSettingsBinding
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 import com.gihansgamage.gpamaster.utils.SemesterManager
+import com.gihansgamage.gpamaster.utils.YearWeightHelper
 
 class SettingsFragment : Fragment() {
 
@@ -56,11 +59,10 @@ class SettingsFragment : Fragment() {
         binding.cardEditProfile.setOnClickListener { showEditProfileDialog() }
         binding.cardChangeScale.setOnClickListener { showChangeScaleDialog() }
         binding.cardChangeStructure.setOnClickListener { showChangeStructureDialog() }
+        binding.cardYearWeights.setOnClickListener { showYearWeightsDialog() }
         binding.cardExportData.setOnClickListener { exportData() }
         binding.cardResetData.setOnClickListener { showResetConfirmationDialog() }
         binding.cardAbout.setOnClickListener { showAboutDialog() }
-
-        // New: Show Grade → GPA mapping
         binding.cardGradeMapping.setOnClickListener { showGradeGpaDialog() }
     }
 
@@ -187,13 +189,197 @@ class SettingsFragment : Fragment() {
             .setTitle("Change Program Structure")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
+                val oldYears = prefs.getYears()
                 prefs.saveYears(selectedYears)
                 prefs.saveSemestersPerYear(selectedSemesters)
                 semesterManager.initializeSemesters()
+
+                // Update year weights if number of years changed
+                if (selectedYears != oldYears) {
+                    YearWeightHelper.updateWeightsForYearChange(requireContext(), selectedYears)
+                    android.widget.Toast.makeText(
+                        requireContext(),
+                        "Year weights have been adjusted. Review them in 'Configure Year Weights'.",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+
                 loadCurrentSettings()
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    // =========================
+    // Configure Year Weights (NEW!)
+    // =========================
+    private fun showYearWeightsDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_year_weights, null)
+        val container = dialogView.findViewById<LinearLayout>(R.id.year_weights_container)
+        val tvTotal = dialogView.findViewById<TextView>(R.id.tv_total_percentage)
+        val tvValidation = dialogView.findViewById<TextView>(R.id.tv_validation_message)
+
+        val years = prefs.getYears()
+        val currentWeights = YearWeightHelper.getYearWeights(requireContext())
+        val editTexts = mutableListOf<EditText>()
+
+        // Create input fields for each year
+        for (year in 1..years) {
+            val yearLayout = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                setPadding(0, 8, 0, 8)
+            }
+
+            val label = TextView(requireContext()).apply {
+                text = "Year $year:"
+                textSize = 16f
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+            }
+
+            val input = EditText(requireContext()).apply {
+                setText(String.format("%.2f", currentWeights[year] ?: 0.0))
+                inputType = android.text.InputType.TYPE_CLASS_NUMBER or
+                        android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                hint = "0.00"
+                background = resources.getDrawable(R.drawable.field_bg, null)
+                setPadding(12, 12, 12, 12)
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+            }
+
+            val percentSign = TextView(requireContext()).apply {
+                text = " %"
+                textSize = 16f
+                setPadding(8, 0, 0, 0)
+            }
+
+            // Update total when text changes
+            input.addTextChangedListener(object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: android.text.Editable?) {
+                    updateTotal(editTexts, tvTotal, tvValidation)
+                }
+            })
+
+            editTexts.add(input)
+            yearLayout.addView(label)
+            yearLayout.addView(input)
+            yearLayout.addView(percentSign)
+            container.addView(yearLayout)
+        }
+
+        // Add preset buttons
+        val presetsLayout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setPadding(0, 16, 0, 0)
+        }
+
+        val presetsLabel = TextView(requireContext()).apply {
+            text = "Quick Presets:"
+            textSize = 14f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setPadding(0, 0, 0, 8)
+        }
+        presetsLayout.addView(presetsLabel)
+
+        val presets = YearWeightHelper.getPresetWeights(years)
+        presets.forEach { (name, weights) ->
+            val btn = android.widget.Button(requireContext()).apply {
+                text = name
+                isAllCaps = false
+                setOnClickListener {
+                    // Apply preset
+                    for (year in 1..years) {
+                        editTexts[year - 1].setText(String.format("%.2f", weights[year] ?: 0.0))
+                    }
+                }
+            }
+            presetsLayout.addView(btn)
+        }
+
+        container.addView(presetsLayout)
+
+        // Initial total calculation
+        updateTotal(editTexts, tvTotal, tvValidation)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Configure Year Weights")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val total = editTexts.sumOf {
+                    it.text.toString().toDoubleOrNull() ?: 0.0
+                }
+
+                if (total < 99.9 || total > 100.1) {
+                    android.widget.Toast.makeText(
+                        requireContext(),
+                        "Total must equal 100%. Current: ${String.format("%.2f", total)}%",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                    return@setPositiveButton
+                }
+
+                val newWeights = mutableMapOf<Int, Double>()
+                for (year in 1..years) {
+                    newWeights[year] = editTexts[year - 1].text.toString().toDoubleOrNull() ?: 0.0
+                }
+
+                YearWeightHelper.saveYearWeights(requireContext(), newWeights)
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "Year weights saved successfully!",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+    }
+
+    private fun updateTotal(
+        editTexts: List<EditText>,
+        tvTotal: TextView,
+        tvValidation: TextView
+    ) {
+        val total = editTexts.sumOf {
+            it.text.toString().toDoubleOrNull() ?: 0.0
+        }
+
+        tvTotal.text = String.format("%.2f%%", total)
+
+        when {
+            total < 99.9 -> {
+                tvValidation.text = "Total is less than 100% (${String.format("%.2f", 100.0 - total)}% remaining)"
+                tvValidation.visibility = android.view.View.VISIBLE
+                tvTotal.setTextColor(resources.getColor(R.color.error, null))
+            }
+            total > 100.1 -> {
+                tvValidation.text = "Total exceeds 100% (${String.format("%.2f", total - 100.0)}% over)"
+                tvValidation.visibility = android.view.View.VISIBLE
+                tvTotal.setTextColor(resources.getColor(R.color.error, null))
+            }
+            else -> {
+                tvValidation.visibility = android.view.View.GONE
+                tvTotal.setTextColor(resources.getColor(R.color.success, null))
+            }
+        }
     }
 
     // =========================
@@ -209,7 +395,19 @@ class SettingsFragment : Fragment() {
         exportBuilder.append("Program Structure: ${prefs.getYears()} Years, ${prefs.getSemestersPerYear()} Semesters/Year\n")
 
         val (overallGPA, totalCredits) = semesterManager.calculateOverallGPA()
+        val (weightedGPA, _) = YearWeightHelper.calculateWeightedGPA(requireContext(), semesterManager)
+
         exportBuilder.append("Current Overall GPA: ${com.gihansgamage.gpamaster.utils.GPAHelper.formatGPA(overallGPA, scale)}\n")
+
+        if (weightedGPA > 0.0 && weightedGPA != overallGPA) {
+            exportBuilder.append("Weighted GPA: ${com.gihansgamage.gpamaster.utils.GPAHelper.formatGPA(weightedGPA, scale)}\n")
+            exportBuilder.append("\nYear Weights:\n")
+            val weights = YearWeightHelper.getYearWeights(requireContext())
+            weights.forEach { (year, weight) ->
+                exportBuilder.append("  Year $year: ${String.format("%.2f", weight)}%\n")
+            }
+        }
+
         exportBuilder.append("Total Credits Earned: ${totalCredits.toInt()}\n")
         exportBuilder.append("==============================\n\n")
 
@@ -256,7 +454,7 @@ class SettingsFragment : Fragment() {
     private fun showResetConfirmationDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("Reset All Data")
-            .setMessage("Are you sure you want to reset ALL data? This will delete:\n\n• All semesters\n• All subjects\n• All grades\n• Your profile settings\n\nThis action CANNOT be undone!")
+            .setMessage("Are you sure you want to reset ALL data? This will delete:\n\n• All semesters\n• All subjects\n• All grades\n• Your profile settings\n• Year weight configuration\n\nThis action CANNOT be undone!")
             .setPositiveButton("Reset Everything") { _, _ -> resetAllData() }
             .setNegativeButton("Cancel", null)
             .show()
@@ -279,7 +477,7 @@ class SettingsFragment : Fragment() {
     private fun showAboutDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("About GPA Master")
-            .setMessage("GPA Master v1.0\nDeveloped by Gihan S Gamage\uD83D\uDDA4\n\nA comprehensive GPA calculator for university students supporting multiple grading scales:\n\n• 4.0 Scale\n• 5.0 Scale\n• 10.0 Scale\n• Percentage Scale\n\nFeatures:\n• Track multiple semesters\n• Calculate semester and overall GPA\n• Visual analytics and progress tracking\n• Flexible program structure\n\nDeveloped to help students monitor their academic progress effectively.")
+            .setMessage("GPA Master v1.0\nDeveloped by Gihan S Gamage\uD83D\uDDA4\n\nA comprehensive GPA calculator for university students supporting multiple grading scales:\n\n• 4.0 Scale\n• 5.0 Scale\n• 10.0 Scale\n• Percentage Scale\n\nFeatures:\n• Track multiple semesters\n• Calculate semester and overall GPA\n• Year-wise weighted GPA calculation\n• Visual progress tracking\n• Flexible program structure\n• Export academic reports\n\nDeveloped to help students monitor their academic progress effectively.")
             .setPositiveButton("OK", null)
             .show()
     }

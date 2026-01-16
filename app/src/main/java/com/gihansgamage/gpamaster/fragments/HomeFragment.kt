@@ -10,6 +10,7 @@ import com.gihansgamage.gpamaster.databinding.FragmentHomeBinding
 import com.gihansgamage.gpamaster.utils.GPAHelper
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 import com.gihansgamage.gpamaster.utils.SemesterManager
+import com.gihansgamage.gpamaster.utils.YearWeightHelper
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -41,15 +42,39 @@ class HomeFragment : Fragment() {
         // Welcome message
         binding.tvWelcome.text = "Hi, ${prefs.getUserName()} 👋"
 
-        // Scale info
-        binding.tvScale.text = "Scale: ${prefs.getScale()}"
+        // Scale and structure info
+        binding.tvScale.text = "GPA Scale: ${prefs.getScale()}"
+        binding.tvProgramStructure.text = "${prefs.getYears()} Years • ${prefs.getSemestersPerYear()} Semesters/Year"
 
-        // Calculate overall GPA and credits
+        // Calculate overall GPA (normal - equal weight for all semesters)
         val (overallGPA, totalCredits) = semesterManager.calculateOverallGPA()
         val scale = prefs.getScale()
 
         binding.tvCurrentGpa.text = GPAHelper.formatGPA(overallGPA, scale)
         binding.tvTotalCredits.text = totalCredits.toInt().toString()
+
+        // Calculate weighted GPA (based on year percentages)
+        val (weightedGPA, appliedWeight) = YearWeightHelper.calculateWeightedGPA(
+            requireContext(),
+            semesterManager
+        )
+
+        // Show weighted GPA card if different from normal GPA
+        if (weightedGPA > 0.0 && kotlin.math.abs(weightedGPA - overallGPA) > 0.01) {
+            binding.cardWeightedGpa.visibility = android.view.View.VISIBLE
+            binding.tvWeightedGpa.text = GPAHelper.formatGPA(weightedGPA, scale)
+
+            // Build year weights description
+            val weights = YearWeightHelper.getYearWeights(requireContext())
+            val weightsText = weights.entries
+                .sortedBy { it.key }
+                .joinToString(", ") { (year, weight) ->
+                    "Y$year: ${String.format("%.0f", weight)}%"
+                }
+            binding.tvWeightedDescription.text = "Based on year percentages ($weightsText)"
+        } else {
+            binding.cardWeightedGpa.visibility = android.view.View.GONE
+        }
 
         // Calculate progress
         val years = prefs.getYears()

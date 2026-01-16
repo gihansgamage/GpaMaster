@@ -44,15 +44,24 @@
                     android:text="GPA Scale: 4.0"
                     android:textSize="14sp"
                     android:textColor="@color/white" />
+
+                <TextView
+                    android:id="@+id/tv_program_structure"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="4 Years • 2 Semesters/Year"
+                    android:textSize="14sp"
+                    android:textColor="@color/white" />
             </LinearLayout>
 
             <!-- ================== -->
-            <!-- GPA Summary Card -->
+            <!-- Normal GPA Card -->
             <!-- ================== -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="12dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:cardBackgroundColor="@android:color/white">
@@ -83,9 +92,17 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Current GPA"
+                            android:text="Normal GPA"
                             android:textSize="14sp"
                             android:textColor="@color/text_secondary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="(Equal weight)"
+                            android:textSize="11sp"
+                            android:textColor="@color/text_tertiary" />
                     </LinearLayout>
 
                     <View
@@ -118,6 +135,67 @@
                             android:textSize="14sp"
                             android:textColor="@color/text_secondary" />
                     </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ================== -->
+            <!-- Weighted GPA Card (NEW!) -->
+            <!-- ================== -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_weighted_gpa"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#E3F2FD">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⭐ "
+                            android:textSize="20sp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Weighted GPA"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_primary" />
+
+                        <TextView
+                            android:id="@+id/tv_weighted_gpa"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="3.65"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:textColor="#1976D2" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_weighted_description"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Based on year percentages (Y1: 10%, Y2: 20%, Y3: 30%, Y4: 40%)"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -161,7 +239,6 @@
                             android:background="@drawable/secondary_btn"
                             android:text="Add Grade"
                             android:textAllCaps="false"/>
-
 
                         <Button
                             android:id="@+id/btn_view_all"
