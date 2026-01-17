@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import com.gihansgamage.gpamaster.MainActivity
 import com.gihansgamage.gpamaster.SemesterDetailActivity
 import com.gihansgamage.gpamaster.databinding.FragmentHomeBinding
+import com.gihansgamage.gpamaster.utils.DegreeClassificationHelper
 import com.gihansgamage.gpamaster.utils.GPAHelper
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 import com.gihansgamage.gpamaster.utils.SemesterManager
@@ -93,6 +94,23 @@ class HomeFragment : Fragment() {
 
         binding.progressBar.progress = progressPercent
         binding.tvProgressText.text = "$progressPercent% Complete"
+
+        // Show degree classification based on weighted GPA (if available) or normal GPA
+        val gpaForClassification = if (weightedGPA > 0.0 && kotlin.math.abs(weightedGPA - overallGPA) > 0.01) {
+            weightedGPA
+        } else {
+            overallGPA
+        }
+
+        if (gpaForClassification > 0.0) {
+            val classification = DegreeClassificationHelper.getClassification(gpaForClassification, scale)
+            binding.cardClassification.visibility = android.view.View.VISIBLE
+            binding.tvClassificationTitle.text = classification.title
+            binding.tvClassificationMessage.text = classification.message
+            binding.cardClassification.setCardBackgroundColor(classification.color)
+        } else {
+            binding.cardClassification.visibility = android.view.View.GONE
+        }
     }
 
     private fun setupRefresh() {
