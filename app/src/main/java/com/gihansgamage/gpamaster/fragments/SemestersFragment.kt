@@ -18,6 +18,7 @@ import com.gihansgamage.gpamaster.utils.GPAHelper
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 import com.gihansgamage.gpamaster.utils.SemesterManager
 import com.gihansgamage.gpamaster.utils.YearWeightHelper
+import com.gihansgamage.gpamaster.utils.GradeMappingHelper
 
 class SemestersFragment : Fragment() {
     private var _binding: FragmentSemestersBinding? = null
@@ -53,8 +54,12 @@ class SemestersFragment : Fragment() {
         val semestersPerYear = prefs.getSemestersPerYear()
         val scale = prefs.getScale()
         val yearWeights = YearWeightHelper.getYearWeights(requireContext())
+        val gradeMappings = GradeMappingHelper.getGradeMappings(requireContext(), scale)
 
         Log.d("SemestersFragment", "Generating for $years years, $semestersPerYear semesters/year")
+
+        // Get all existing semesters
+        val allSemesters = semesterManager.getAvailableSemesters()
 
         // Group by years
         for (y in 1..years) {
@@ -98,18 +103,20 @@ class SemestersFragment : Fragment() {
 
             binding.semesterContainer.addView(yearHeaderLayout)
 
-            // Calculate year GPA
+            // Calculate year GPA using custom grade mappings
             var yearTotalPoints = 0.0
             var yearTotalCredits = 0.0
 
             for (s in 1..semestersPerYear) {
-                val semester = semesterManager.getOrCreateSemester(y, s)
-                val subjects = semesterManager.getSubjectsForSemester(semester.id)
+                val semester = allSemesters.find { it.year == y && it.semesterNumber == s }
+                if (semester != null) {
+                    val subjects = semesterManager.getSubjectsForSemester(semester.id)
 
-                subjects.forEach { subject ->
-                    val gradePoints = GPAHelper.getGradePoints(scale)[subject.grade] ?: 0.0
-                    yearTotalPoints += gradePoints * subject.credits
-                    yearTotalCredits += subject.credits
+                    subjects.forEach { subject ->
+                        val gradePoints = gradeMappings[subject.grade] ?: 0.0
+                        yearTotalPoints += gradePoints * subject.credits
+                        yearTotalCredits += subject.credits
+                    }
                 }
             }
 

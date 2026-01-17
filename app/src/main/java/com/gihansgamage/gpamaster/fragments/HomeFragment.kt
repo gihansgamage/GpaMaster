@@ -82,7 +82,7 @@ class HomeFragment : Fragment() {
         val semestersPerYear = prefs.getSemestersPerYear()
         val totalSemesters = years * semestersPerYear
 
-        val completedSemesters = semesterManager.getAllSemesters()
+        val completedSemesters = semesterManager.getAvailableSemesters()
             .count { it.totalCredits > 0 }
 
         binding.tvSemestersCompleted.text = "Semesters: $completedSemesters/$totalSemesters"
@@ -144,15 +144,14 @@ class HomeFragment : Fragment() {
             )
             val scale = prefs.getScale()
 
-            // Get all semesters
-            val allSemesters = semesterManager.getAllSemesters()
-                .sortedWith(compareBy({ it.year }, { it.semesterNumber }))
+            // Get available semesters (only those that should exist based on current settings)
+            val availableSemesters = semesterManager.getAvailableSemesters()
 
-            if (allSemesters.isEmpty()) {
+            if (availableSemesters.isEmpty()) {
                 android.widget.Toast.makeText(
                     requireContext(),
-                    "No semesters available",
-                    android.widget.Toast.LENGTH_SHORT
+                    "No semesters available. Please check your program structure settings.",
+                    android.widget.Toast.LENGTH_LONG
                 ).show()
                 return
             }
@@ -177,8 +176,8 @@ class HomeFragment : Fragment() {
                 com.gihansgamage.gpamaster.R.id.tv_percentage_label
             )
 
-            // Setup semester spinner
-            val semesterNames = allSemesters.map {
+            // Setup semester spinner - Only show semesters within current program structure
+            val semesterNames = availableSemesters.map {
                 "Year ${it.year} - Semester ${it.semesterNumber}"
             }
             val semesterAdapter = android.widget.ArrayAdapter(
@@ -190,7 +189,7 @@ class HomeFragment : Fragment() {
             spinnerSemester.adapter = semesterAdapter
 
             // Select first incomplete semester by default
-            val firstIncompleteIndex = allSemesters.indexOfFirst { it.totalCredits == 0.0 }
+            val firstIncompleteIndex = availableSemesters.indexOfFirst { it.totalCredits == 0.0 }
             if (firstIncompleteIndex != -1) {
                 spinnerSemester.setSelection(firstIncompleteIndex)
             }
@@ -219,7 +218,17 @@ class HomeFragment : Fragment() {
                 .setView(dialogView)
                 .setPositiveButton("Add") { _, _ ->
                     try {
-                        val selectedSemester = allSemesters[spinnerSemester.selectedItemPosition]
+                        if (spinnerSemester.selectedItemPosition < 0 ||
+                            spinnerSemester.selectedItemPosition >= availableSemesters.size) {
+                            android.widget.Toast.makeText(
+                                requireContext(),
+                                "Please select a valid semester",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                            return@setPositiveButton
+                        }
+
+                        val selectedSemester = availableSemesters[spinnerSemester.selectedItemPosition]
                         val name = etSubjectName.text.toString().trim()
                         val creditsStr = etCredits.text.toString().trim()
                         val grade = spinnerGrade.selectedItem?.toString() ?: "A"

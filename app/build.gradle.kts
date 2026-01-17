@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.gihansgamage.gpamaster"
-    compileSdk = 34
+    compileSdk = 35
 
     buildFeatures {
         dataBinding = true  // Add this line
@@ -17,7 +17,7 @@ android {
     defaultConfig {
         applicationId = "com.gihansgamage.gpamaster"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 

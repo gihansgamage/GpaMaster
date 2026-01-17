@@ -151,12 +151,15 @@ class SettingsFragment : Fragment() {
         val semestersSpinner = dialogView.findViewById<Spinner>(R.id.spinner_semesters)
         val btnConfigureWeights = dialogView.findViewById<android.widget.Button>(R.id.btn_configure_weights)
         val weightsPreviewText = dialogView.findViewById<TextView>(R.id.tv_weights_preview)
+        val warningText = dialogView.findViewById<TextView>(R.id.tv_structure_warning)
 
         val yearsArray = (1..10).map { "$it year${if (it > 1) "s" else ""}" }.toTypedArray()
         val semestersArray = (1..5).map { "$it semester${if (it > 1) "s" else ""} per year" }.toTypedArray()
 
-        var selectedYears = prefs.getYears()
-        var selectedSemesters = prefs.getSemestersPerYear()
+        val oldYears = prefs.getYears()
+        val oldSemesters = prefs.getSemestersPerYear()
+        var selectedYears = oldYears
+        var selectedSemesters = oldSemesters
 
         yearsSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, yearsArray).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -168,10 +171,10 @@ class SettingsFragment : Fragment() {
         }
         semestersSpinner.setSelection(selectedSemesters - 1)
 
-        // Update preview when years change
-        fun updateWeightsPreview() {
+        // Update preview and warnings when selection changes
+        fun updatePreviewAndWarnings() {
             val weights = YearWeightHelper.getYearWeights(requireContext())
-            val weightsText = if (selectedYears != prefs.getYears()) {
+            val weightsText = if (selectedYears != oldYears) {
                 "Weights will be recalculated"
             } else {
                 weights.entries
@@ -181,12 +184,35 @@ class SettingsFragment : Fragment() {
                     }
             }
             weightsPreviewText.text = "Current: $weightsText"
+
+            // Show warning if data will be deleted
+            val willDeleteData = selectedYears < oldYears || selectedSemesters < oldSemesters
+            if (willDeleteData) {
+                val deletedYears = if (selectedYears < oldYears) {
+                    "Years ${selectedYears + 1} to $oldYears"
+                } else ""
+                val deletedSemesters = if (selectedSemesters < oldSemesters) {
+                    "Semesters ${selectedSemesters + 1} to $oldSemesters (in all years)"
+                } else ""
+
+                val warningMessage = buildString {
+                    append("⚠️ WARNING: This will permanently delete:\n")
+                    if (deletedYears.isNotEmpty()) append("• $deletedYears\n")
+                    if (deletedSemesters.isNotEmpty()) append("• $deletedSemesters\n")
+                    append("All subjects and grades in deleted semesters will be lost!")
+                }
+
+                warningText.text = warningMessage
+                warningText.visibility = View.VISIBLE
+            } else {
+                warningText.visibility = View.GONE
+            }
         }
 
         yearsSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
                 selectedYears = position + 1
-                updateWeightsPreview()
+                updatePreviewAndWarnings()
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
@@ -194,11 +220,12 @@ class SettingsFragment : Fragment() {
         semestersSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
                 selectedSemesters = position + 1
+                updatePreviewAndWarnings()
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
 
-        updateWeightsPreview()
+        updatePreviewAndWarnings()
 
         // Configure weights button
         btnConfigureWeights.setOnClickListener {
@@ -209,27 +236,70 @@ class SettingsFragment : Fragment() {
             .setTitle("Change Program Structure")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
-                val oldYears = prefs.getYears()
-                prefs.saveYears(selectedYears)
-                prefs.saveSemestersPerYear(selectedSemesters)
-                semesterManager.initializeSemesters()
+                val willDeleteData = selectedYears < oldYears || selectedSemesters < oldSemesters
 
-                // Update year weights if number of years changed
-                if (selectedYears != oldYears) {
-                    YearWeightHelper.updateWeightsForYearChange(requireContext(), selectedYears)
-                    android.widget.Toast.makeText(
-                        requireContext(),
-                        "Year weights have been adjusted automatically.",
-                        android.widget.Toast.LENGTH_LONG
-                    ).show()
+                if (willDeleteData) {
+                    // Show confirmation dialog before deleting data
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("Confirm Changes")
+                        .setMessage("This will permanently delete data from removed years/semesters. Are you sure you want to continue?")
+                        .setPositiveButton("Yes, Delete") { _, _ ->
+                            applyStructureChanges(oldYears, oldSemesters, selectedYears, selectedSemesters)
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                } else {
+                    applyStructureChanges(oldYears, oldSemesters, selectedYears, selectedSemesters)
                 }
-
-                loadCurrentSettings()
             }
             .setNegativeButton("Cancel", null)
             .create()
 
         dialog.show()
+    }
+
+    private fun applyStructureChanges(
+        oldYears: Int,
+        oldSemesters: Int,
+        newYears: Int,
+        newSemesters: Int
+    ) {
+        // Delete data from removed years
+        if (newYears < oldYears) {
+            for (year in (newYears + 1)..oldYears) {
+                semesterManager.deleteYear(year)
+            }
+        }
+
+        // Delete data from removed semesters in all years
+        if (newSemesters < oldSemesters) {
+            for (year in 1..newYears) {
+                for (semester in (newSemesters + 1)..oldSemesters) {
+                    semesterManager.deleteSemester(year, semester)
+                }
+            }
+        }
+
+        // Save new settings
+        prefs.saveYears(newYears)
+        prefs.saveSemestersPerYear(newSemesters)
+
+        // Initialize new semesters if added
+        semesterManager.initializeSemesters()
+
+        // Update year weights if number of years changed
+        if (newYears != oldYears) {
+            YearWeightHelper.updateWeightsForYearChange(requireContext(), newYears)
+        }
+
+        val message = if (newYears < oldYears || newSemesters < oldSemesters) {
+            "Structure updated. Data from removed years/semesters has been deleted."
+        } else {
+            "Structure updated successfully!"
+        }
+
+        android.widget.Toast.makeText(requireContext(), message, android.widget.Toast.LENGTH_LONG).show()
+        loadCurrentSettings()
     }
 
     // =========================

@@ -85,11 +85,25 @@
             android:textAllCaps="false"
             android:backgroundTint="@color/accent" />
 
+        <!-- Warning Message -->
+        <TextView
+            android:id="@+id/tv_structure_warning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:padding="12dp"
+            android:background="@drawable/field_bg"
+            android:text="⚠️ WARNING: Reducing years/semesters will delete data!"
+            android:textSize="12sp"
+            android:textColor="@color/error"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
         <!-- Info Message -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:text="Note: Changing the number of years will automatically adjust year weights proportionally."
             android:textSize="12sp"
             android:textColor="@color/text_tertiary"

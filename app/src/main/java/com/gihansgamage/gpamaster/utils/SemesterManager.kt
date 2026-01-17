@@ -172,4 +172,46 @@ class SemesterManager(private val context: Context) {
             }
         }
     }
+
+    // Delete all semesters and subjects for a specific year
+    fun deleteYear(year: Int) {
+        val semesters = getAllSemesters().toMutableList()
+        val semestersToDelete = semesters.filter { it.year == year }
+
+        // Delete all subjects in each semester of this year
+        semestersToDelete.forEach { semester ->
+            prefs.saveString("subjects_${semester.id}", "[]")
+        }
+
+        // Remove semesters of this year
+        semesters.removeAll { it.year == year }
+        saveSemesters(semesters)
+    }
+
+    // Delete a specific semester and its subjects
+    fun deleteSemester(year: Int, semesterNumber: Int) {
+        val semesters = getAllSemesters().toMutableList()
+        val semesterToDelete = semesters.find { it.year == year && it.semesterNumber == semesterNumber }
+
+        if (semesterToDelete != null) {
+            // Delete all subjects in this semester
+            prefs.saveString("subjects_${semesterToDelete.id}", "[]")
+
+            // Remove semester
+            semesters.removeAll { it.year == year && it.semesterNumber == semesterNumber }
+            saveSemesters(semesters)
+        }
+    }
+
+    // Get available semesters for quick add (only existing semesters)
+    fun getAvailableSemesters(): List<Semester> {
+        val years = prefs.getYears()
+        val semestersPerYear = prefs.getSemestersPerYear()
+        val allSemesters = getAllSemesters()
+
+        // Return only semesters that should exist based on current settings
+        return allSemesters.filter {
+            it.year <= years && it.semesterNumber <= semestersPerYear
+        }.sortedWith(compareBy({ it.year }, { it.semesterNumber }))
+    }
 }
