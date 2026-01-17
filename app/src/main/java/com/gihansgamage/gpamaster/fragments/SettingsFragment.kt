@@ -15,6 +15,8 @@ import androidx.fragment.app.Fragment
 import com.gihansgamage.gpamaster.LoginActivity
 import com.gihansgamage.gpamaster.R
 import com.gihansgamage.gpamaster.databinding.FragmentSettingsBinding
+import com.gihansgamage.gpamaster.utils.GPAHelper
+import com.gihansgamage.gpamaster.utils.GradeMappingHelper
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 import com.gihansgamage.gpamaster.utils.SemesterManager
 import com.gihansgamage.gpamaster.utils.YearWeightHelper
@@ -48,22 +50,30 @@ class SettingsFragment : Fragment() {
         val scale = prefs.getScale()
         val years = prefs.getYears()
         val semestersPerYear = prefs.getSemestersPerYear()
+        val yearWeights = YearWeightHelper.getYearWeights(requireContext())
 
         binding.tvCurrentName.text = "Name: $userName"
         binding.tvCurrentScale.text = "Scale: $scale"
         binding.tvCurrentYears.text = "Years: $years"
         binding.tvCurrentSemesters.text = "Semesters per Year: $semestersPerYear"
+
+        // Display year weights
+        val weightsText = yearWeights.entries
+            .sortedBy { it.key }
+            .joinToString(", ") { (year, weight) ->
+                "Y$year: ${String.format("%.0f", weight)}%"
+            }
+        binding.tvCurrentYearWeights.text = "Year Weights: $weightsText"
     }
 
     private fun setupClickListeners() {
         binding.cardEditProfile.setOnClickListener { showEditProfileDialog() }
         binding.cardChangeScale.setOnClickListener { showChangeScaleDialog() }
         binding.cardChangeStructure.setOnClickListener { showChangeStructureDialog() }
-        binding.cardYearWeights.setOnClickListener { showYearWeightsDialog() }
         binding.cardExportData.setOnClickListener { exportData() }
         binding.cardResetData.setOnClickListener { showResetConfirmationDialog() }
         binding.cardAbout.setOnClickListener { showAboutDialog() }
-        binding.cardGradeMapping.setOnClickListener { showGradeGpaDialog() }
+        binding.cardGradeMapping.setOnClickListener { showEditGradeMappingDialog() }
     }
 
     // =========================
@@ -119,6 +129,8 @@ class SettingsFragment : Fragment() {
                     .setMessage("Changing the scale will affect all GPA calculations. Continue?")
                     .setPositiveButton("Yes") { _, _ ->
                         prefs.saveScale(selectedScale)
+                        // Reset custom grade mappings when scale changes
+                        GradeMappingHelper.resetToDefaults(requireContext(), selectedScale)
                         loadCurrentSettings()
                         dialog.dismiss()
                     }
@@ -130,62 +142,70 @@ class SettingsFragment : Fragment() {
     }
 
     // =========================
-    // Change Program Structure
+    // Change Program Structure with Year Weights
     // =========================
     private fun showChangeStructureDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_change_structure, null)
+
+        val yearsSpinner = dialogView.findViewById<Spinner>(R.id.spinner_years)
+        val semestersSpinner = dialogView.findViewById<Spinner>(R.id.spinner_semesters)
+        val btnConfigureWeights = dialogView.findViewById<android.widget.Button>(R.id.btn_configure_weights)
+        val weightsPreviewText = dialogView.findViewById<TextView>(R.id.tv_weights_preview)
+
         val yearsArray = (1..10).map { "$it year${if (it > 1) "s" else ""}" }.toTypedArray()
         val semestersArray = (1..5).map { "$it semester${if (it > 1) "s" else ""} per year" }.toTypedArray()
 
         var selectedYears = prefs.getYears()
         var selectedSemesters = prefs.getSemestersPerYear()
 
-        val dialogView = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 32, 32, 32)
+        yearsSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, yearsArray).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
+        yearsSpinner.setSelection(selectedYears - 1)
 
-        val yearsText = android.widget.TextView(requireContext()).apply {
-            text = "Number of Years"
-            textSize = 16f
+        semestersSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, semestersArray).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
-        dialogView.addView(yearsText)
+        semestersSpinner.setSelection(selectedSemesters - 1)
 
-        val yearsSpinner = Spinner(requireContext()).apply {
-            adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, yearsArray).apply {
-                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        // Update preview when years change
+        fun updateWeightsPreview() {
+            val weights = YearWeightHelper.getYearWeights(requireContext())
+            val weightsText = if (selectedYears != prefs.getYears()) {
+                "Weights will be recalculated"
+            } else {
+                weights.entries
+                    .sortedBy { it.key }
+                    .joinToString(", ") { (year, weight) ->
+                        "Y$year: ${String.format("%.0f", weight)}%"
+                    }
             }
-            setSelection(selectedYears - 1)
-            onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    selectedYears = position + 1
-                }
-                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
-            }
+            weightsPreviewText.text = "Current: $weightsText"
         }
-        dialogView.addView(yearsSpinner)
 
-        val semestersText = android.widget.TextView(requireContext()).apply {
-            text = "Semesters per Year"
-            textSize = 16f
-            setPadding(0, 24, 0, 0)
-        }
-        dialogView.addView(semestersText)
-
-        val semestersSpinner = Spinner(requireContext()).apply {
-            adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, semestersArray).apply {
-                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        yearsSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selectedYears = position + 1
+                updateWeightsPreview()
             }
-            setSelection(selectedSemesters - 1)
-            onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    selectedSemesters = position + 1
-                }
-                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
-            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
-        dialogView.addView(semestersSpinner)
 
-        AlertDialog.Builder(requireContext())
+        semestersSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selectedSemesters = position + 1
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        updateWeightsPreview()
+
+        // Configure weights button
+        btnConfigureWeights.setOnClickListener {
+            showYearWeightsDialog(selectedYears)
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle("Change Program Structure")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
@@ -199,7 +219,7 @@ class SettingsFragment : Fragment() {
                     YearWeightHelper.updateWeightsForYearChange(requireContext(), selectedYears)
                     android.widget.Toast.makeText(
                         requireContext(),
-                        "Year weights have been adjusted. Review them in 'Configure Year Weights'.",
+                        "Year weights have been adjusted automatically.",
                         android.widget.Toast.LENGTH_LONG
                     ).show()
                 }
@@ -207,24 +227,25 @@ class SettingsFragment : Fragment() {
                 loadCurrentSettings()
             }
             .setNegativeButton("Cancel", null)
-            .show()
+            .create()
+
+        dialog.show()
     }
 
     // =========================
-    // Configure Year Weights (NEW!)
+    // Configure Year Weights
     // =========================
-    private fun showYearWeightsDialog() {
+    private fun showYearWeightsDialog(yearsToConfig: Int = prefs.getYears()) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_year_weights, null)
         val container = dialogView.findViewById<LinearLayout>(R.id.year_weights_container)
         val tvTotal = dialogView.findViewById<TextView>(R.id.tv_total_percentage)
         val tvValidation = dialogView.findViewById<TextView>(R.id.tv_validation_message)
 
-        val years = prefs.getYears()
         val currentWeights = YearWeightHelper.getYearWeights(requireContext())
         val editTexts = mutableListOf<EditText>()
 
         // Create input fields for each year
-        for (year in 1..years) {
+        for (year in 1..yearsToConfig) {
             val yearLayout = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(
@@ -298,14 +319,13 @@ class SettingsFragment : Fragment() {
         }
         presetsLayout.addView(presetsLabel)
 
-        val presets = YearWeightHelper.getPresetWeights(years)
+        val presets = YearWeightHelper.getPresetWeights(yearsToConfig)
         presets.forEach { (name, weights) ->
             val btn = android.widget.Button(requireContext()).apply {
                 text = name
                 isAllCaps = false
                 setOnClickListener {
-                    // Apply preset
-                    for (year in 1..years) {
+                    for (year in 1..yearsToConfig) {
                         editTexts[year - 1].setText(String.format("%.2f", weights[year] ?: 0.0))
                     }
                 }
@@ -336,7 +356,7 @@ class SettingsFragment : Fragment() {
                 }
 
                 val newWeights = mutableMapOf<Int, Double>()
-                for (year in 1..years) {
+                for (year in 1..yearsToConfig) {
                     newWeights[year] = editTexts[year - 1].text.toString().toDoubleOrNull() ?: 0.0
                 }
 
@@ -346,6 +366,7 @@ class SettingsFragment : Fragment() {
                     "Year weights saved successfully!",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
+                loadCurrentSettings()
             }
             .setNegativeButton("Cancel", null)
             .create()
@@ -380,6 +401,106 @@ class SettingsFragment : Fragment() {
                 tvTotal.setTextColor(resources.getColor(R.color.success, null))
             }
         }
+    }
+
+    // =========================
+    // Edit Grade Mapping
+    // =========================
+    private fun showEditGradeMappingDialog() {
+        val scale = prefs.getScale()
+        val dialogView = layoutInflater.inflate(R.layout.dialog_edit_grade_mapping, null)
+        val container = dialogView.findViewById<LinearLayout>(R.id.grade_mapping_container)
+        val btnReset = dialogView.findViewById<android.widget.Button>(R.id.btn_reset_defaults)
+
+        val currentMappings = GradeMappingHelper.getGradeMappings(requireContext(), scale)
+        val editTexts = mutableMapOf<String, EditText>()
+
+        // Create input fields for each grade
+        currentMappings.forEach { (grade, value) ->
+            val gradeLayout = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                setPadding(0, 8, 0, 8)
+            }
+
+            val label = TextView(requireContext()).apply {
+                text = "$grade → "
+                textSize = 16f
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+            }
+
+            val input = EditText(requireContext()).apply {
+                setText(String.format("%.2f", value))
+                inputType = android.text.InputType.TYPE_CLASS_NUMBER or
+                        android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                hint = "0.00"
+                background = resources.getDrawable(R.drawable.field_bg, null)
+                setPadding(12, 12, 12, 12)
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+            }
+
+            editTexts[grade] = input
+            gradeLayout.addView(label)
+            gradeLayout.addView(input)
+            container.addView(gradeLayout)
+        }
+
+        // Reset to defaults button
+        btnReset.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Reset to Defaults?")
+                .setMessage("This will restore standard grade mappings for the $scale scale.")
+                .setPositiveButton("Reset") { _, _ ->
+                    GradeMappingHelper.resetToDefaults(requireContext(), scale)
+                    android.widget.Toast.makeText(
+                        requireContext(),
+                        "Grade mappings reset to defaults",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                    // Refresh the dialog
+                    showEditGradeMappingDialog()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Edit Grade Mappings")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val newMappings = mutableMapOf<String, Double>()
+                editTexts.forEach { (grade, editText) ->
+                    val value = editText.text.toString().toDoubleOrNull()
+                    if (value != null) {
+                        newMappings[grade] = value
+                    }
+                }
+
+                GradeMappingHelper.saveGradeMappings(requireContext(), scale, newMappings)
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "Grade mappings saved successfully!",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .setNeutralButton("View Only") { _, _ ->
+                showGradeGpaDialog()
+            }
+            .create()
+
+        dialog.show()
     }
 
     // =========================
@@ -454,7 +575,7 @@ class SettingsFragment : Fragment() {
     private fun showResetConfirmationDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("Reset All Data")
-            .setMessage("Are you sure you want to reset ALL data? This will delete:\n\n• All semesters\n• All subjects\n• All grades\n• Your profile settings\n• Year weight configuration\n\nThis action CANNOT be undone!")
+            .setMessage("Are you sure you want to reset ALL data? This will delete:\n\n• All semesters\n• All subjects\n• All grades\n• Your profile settings\n• Year weight configuration\n• Custom grade mappings\n\nThis action CANNOT be undone!")
             .setPositiveButton("Reset Everything") { _, _ -> resetAllData() }
             .setNegativeButton("Cancel", null)
             .show()
@@ -463,6 +584,7 @@ class SettingsFragment : Fragment() {
     private fun resetAllData() {
         semesterManager.resetAllData()
         prefs.clearAll()
+        GradeMappingHelper.clearCustomMappings(requireContext())
 
         val intent = Intent(requireContext(), LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -477,58 +599,33 @@ class SettingsFragment : Fragment() {
     private fun showAboutDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("About GPA Master")
-            .setMessage("GPA Master v1.0\nDeveloped by Gihan S Gamage\uD83D\uDDA4\n\nA comprehensive GPA calculator for university students supporting multiple grading scales:\n\n• 4.0 Scale\n• 5.0 Scale\n• 10.0 Scale\n• Percentage Scale\n\nFeatures:\n• Track multiple semesters\n• Calculate semester and overall GPA\n• Year-wise weighted GPA calculation\n• Visual progress tracking\n• Flexible program structure\n• Export academic reports\n\nDeveloped to help students monitor their academic progress effectively.")
+            .setMessage("GPA Master v1.0\nDeveloped by Gihan S Gamage\uD83D\uDDA4\n\nA comprehensive GPA calculator for university students supporting multiple grading scales:\n\n• 4.0 Scale\n• 5.0 Scale\n• 10.0 Scale\n• Percentage Scale\n\nFeatures:\n• Track multiple semesters\n• Calculate semester and overall GPA\n• Year-wise weighted GPA calculation\n• Customizable grade mappings\n• Visual progress tracking\n• Flexible program structure\n• Export academic reports\n\nDeveloped to help students monitor their academic progress effectively.")
             .setPositiveButton("OK", null)
             .show()
     }
 
     // =========================
-    // Grade → GPA Mapping
+    // View Grade → GPA Mapping (Read Only)
     // =========================
-    private fun getGradeGpaMapping(scale: String): Map<String, Double> {
-        return when (scale) {
-            "4.0" -> mapOf(
-                "A+" to 4.0, "A" to 4.0, "A−" to 3.7,
-                "B+" to 3.3, "B" to 3.0, "B−" to 2.7,
-                "C+" to 2.3, "C" to 2.0, "C−" to 1.7,
-                "D" to 1.0, "F" to 0.0
-            )
-            "5.0" -> mapOf(
-                "A+" to 5.0, "A" to 4.5, "A−" to 4.0,
-                "B+" to 3.5, "B" to 3.0, "B−" to 2.5,
-                "C+" to 2.0, "C" to 1.5, "C−" to 1.0,
-                "D" to 0.5, "F" to 0.0
-            )
-            "10.0" -> mapOf(
-                "A+" to 10.0, "A" to 9.0,
-                "B+" to 8.0, "B" to 7.0,
-                "C+" to 6.0, "C" to 5.0,
-                "D" to 4.0, "F" to 0.0
-            )
-            "percentage" -> mapOf(
-                "A+" to 100.0, "A" to 90.0,
-                "B+" to 80.0, "B" to 70.0,
-                "C" to 60.0, "D" to 50.0,
-                "F" to 30.0
-            )
-            else -> emptyMap()
-        }
-    }
-
     private fun showGradeGpaDialog() {
         val scale = prefs.getScale()
-        val mapping = getGradeGpaMapping(scale)
+        val mapping = GradeMappingHelper.getGradeMappings(requireContext(), scale)
+
         if (mapping.isEmpty()) return
 
         val message = StringBuilder()
+        message.append("Current mappings for $scale scale:\n\n")
         mapping.forEach { (grade, gpa) ->
-            message.append("$grade → $gpa\n")
+            message.append("$grade → ${String.format("%.2f", gpa)}\n")
         }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Grade → GPA ($scale Scale)")
+            .setTitle("Grade → GPA Mapping")
             .setMessage(message.toString())
-            .setPositiveButton("OK", null)
+            .setPositiveButton("Edit") { _, _ ->
+                showEditGradeMappingDialog()
+            }
+            .setNegativeButton("Close", null)
             .show()
     }
 

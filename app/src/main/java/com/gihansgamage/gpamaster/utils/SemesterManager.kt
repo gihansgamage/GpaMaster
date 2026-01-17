@@ -100,12 +100,24 @@ class SemesterManager(private val context: Context) {
         saveSubjectsForSemester(semesterId, subjects)
     }
 
-    // Recalculate semester GPA
+    // Recalculate semester GPA using custom grade mappings
     private fun recalculateSemesterGPA(semesterId: Int) {
         val subjects = getSubjectsForSemester(semesterId)
         val scale = prefs.getScale()
 
-        val (gpa, totalCredits) = GPAHelper.calculateSemesterGPA(subjects, scale)
+        // Use custom grade mappings
+        val gradeMappings = GradeMappingHelper.getGradeMappings(context, scale)
+
+        var totalPoints = 0.0
+        var totalCredits = 0.0
+
+        subjects.forEach { subject ->
+            val gradePoints = gradeMappings[subject.grade] ?: 0.0
+            totalPoints += gradePoints * subject.credits
+            totalCredits += subject.credits
+        }
+
+        val gpa = if (totalCredits > 0) totalPoints / totalCredits else 0.0
 
         val semesters = getAllSemesters().toMutableList()
         val index = semesters.indexOfFirst { it.id == semesterId }
@@ -118,16 +130,19 @@ class SemesterManager(private val context: Context) {
         }
     }
 
-    // Calculate overall GPA
+    // Calculate overall GPA using custom grade mappings
     fun calculateOverallGPA(): Pair<Double, Double> {
         val semesters = getAllSemesters()
+        val scale = prefs.getScale()
+        val gradeMappings = GradeMappingHelper.getGradeMappings(context, scale)
+
         var totalPoints = 0.0
         var totalCredits = 0.0
 
         semesters.forEach { semester ->
             val subjects = getSubjectsForSemester(semester.id)
             subjects.forEach { subject ->
-                val gradePoints = GPAHelper.getGradePoints(prefs.getScale())[subject.grade] ?: 0.0
+                val gradePoints = gradeMappings[subject.grade] ?: 0.0
                 totalPoints += gradePoints * subject.credits
                 totalCredits += subject.credits
             }

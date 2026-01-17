@@ -76,6 +76,16 @@
                     android:text="Semesters per Year: 2"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
+                    android:layout_marginBottom="4dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <!-- NEW: Year Weights Display -->
+                <TextView
+                    android:id="@+id/tv_current_year_weights"
+                    android:text="Year Weights: Y1: 25%, Y2: 25%, Y3: 25%, Y4: 25%"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
@@ -141,7 +151,7 @@
                     android:layout_height="wrap_content" />
 
                 <TextView
-                    android:text="Switch between 4.0, 5.0 or custom scales"
+                    android:text="Switch between 4.0, 5.0, 10.0 or percentage scales"
                     android:textSize="12sp"
                     android:textColor="@color/text_secondary"
                     android:layout_marginTop="4dp"
@@ -150,7 +160,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Grade Mapping -->
+        <!-- UPDATED: Grade Mapping (now editable) -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardGradeMapping"
             android:layout_width="match_parent"
@@ -168,14 +178,14 @@
                 android:layout_height="wrap_content">
 
                 <TextView
-                    android:text="View Grade Mapping"
+                    android:text="Edit Grade Mappings"
                     android:textSize="16sp"
                     android:textColor="@color/text_primary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
                 <TextView
-                    android:text="See how grades convert to GPA values"
+                    android:text="Customize how grades convert to GPA values"
                     android:textSize="12sp"
                     android:textColor="@color/text_secondary"
                     android:layout_marginTop="4dp"
@@ -184,7 +194,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Program Structure -->
+        <!-- UPDATED: Program Structure (now includes year weights) -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_change_structure"
             android:layout_width="match_parent"
@@ -209,41 +219,7 @@
                     android:layout_height="wrap_content" />
 
                 <TextView
-                    android:text="Update number of years and semesters"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginTop="4dp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Year Weights -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/card_year_weights"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="2dp"
-            android:clickable="true"
-            android:foreground="?android:attr/selectableItemBackground">
-
-            <LinearLayout
-                android:padding="16dp"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:text="Configure Year Weights"
-                    android:textSize="16sp"
-                    android:textColor="@color/text_primary"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:text="Set percentage contribution of each year"
+                    android:text="Update years, semesters and configure year weights"
                     android:textSize="12sp"
                     android:textColor="@color/text_secondary"
                     android:layout_marginTop="4dp"
@@ -277,7 +253,7 @@
                     android:layout_height="wrap_content" />
 
                 <TextView
-                    android:text="Save your GPA data as a file"
+                    android:text="Share your GPA data and academic report"
                     android:textSize="12sp"
                     android:textColor="@color/text_secondary"
                     android:layout_marginTop="4dp"
