@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
+import com.gihansgamage.gpamaster.AllResultsActivity
 import com.gihansgamage.gpamaster.MainActivity
 import com.gihansgamage.gpamaster.SemesterDetailActivity
 import com.gihansgamage.gpamaster.databinding.FragmentHomeBinding
@@ -157,13 +158,9 @@ class HomeFragment : Fragment() {
             showQuickAddGradeDialog()
         }
 
-        // "View All" button - Switch to Semesters tab
+        // "View All" button - Open All Results screen
         binding.btnViewAll.setOnClickListener {
-            (activity as? MainActivity)?.let { mainActivity ->
-                mainActivity.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(
-                    com.gihansgamage.gpamaster.R.id.bottom_navigation
-                )?.selectedItemId = com.gihansgamage.gpamaster.R.id.nav_semesters
-            }
+            startActivity(android.content.Intent(requireContext(), AllResultsActivity::class.java))
         }
     }
 

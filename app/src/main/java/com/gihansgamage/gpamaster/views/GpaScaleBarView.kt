@@ -105,7 +105,7 @@ class GpaScaleBarView @JvmOverloads constructor(
         maxScale = scale
         bands = bandList
         val matchingBand = bands.lastOrNull { gpa >= it.fromGpa }
-        currentBandLabel = matchingBand?.label ?: bands.firstOrNull()?.label ?: ""
+        currentBandLabel = matchingBand?.shortLabel ?: bands.firstOrNull()?.shortLabel ?: ""
 
         // Tint pointer and label to the band colour
         val bandColor = matchingBand?.color ?: Color.GRAY
