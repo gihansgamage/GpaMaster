@@ -4,6 +4,24 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
+/**
+ * Holds the result of a weighted GPA calculation, including metadata
+ * about which years contributed and their effective (renormalized) weights.
+ *
+ * @param weightedGPA      The final weighted GPA value.
+ * @param appliedWeight    Sum of original weights for years that had data (0–100).
+ * @param effectiveWeights Renormalized weight per year (sums to 100) for years with data.
+ * @param yearsWithData    List of year numbers that had at least one subject.
+ * @param isPartial        True when fewer years have data than the total programme years.
+ */
+data class WeightedGPAResult(
+    val weightedGPA: Double,
+    val appliedWeight: Double,
+    val effectiveWeights: Map<Int, Double>,
+    val yearsWithData: List<Int>,
+    val isPartial: Boolean
+)
+
 object YearWeightHelper {
 
     /**
@@ -89,12 +107,32 @@ object YearWeightHelper {
     }
 
     /**
-     * Calculate weighted GPA based on year weights
+     * Returns true when all year weights are effectively equal (within 0.01 tolerance).
+     * When weights are equal the weighted GPA is identical to the plain GPA, so the
+     * Weighted GPA card can safely be hidden.
+     */
+    fun areWeightsEqual(weights: Map<Int, Double>): Boolean {
+        if (weights.size <= 1) return true
+        val first = weights.values.first()
+        return weights.values.all { kotlin.math.abs(it - first) < 0.01 }
+    }
+
+    /**
+     * Calculate weighted GPA based on year weights.
+     *
+     * Handles partial-year scenarios: if the user has only entered results for a
+     * subset of years (e.g. Y1+Y2 of a 4-year degree), the original weights for
+     * those years are renormalized so they still sum to 100%.
+     *
+     * Example: weights 10:20:30:40 and only Y1+Y2 have data →
+     *   raw partial weights 10+20 = 30 → effective Y1 = 33.3%, Y2 = 66.7%
+     *
+     * @return [WeightedGPAResult] containing the GPA, effective weights, and partial flag.
      */
     fun calculateWeightedGPA(
         context: Context,
         semesterManager: SemesterManager
-    ): Pair<Double, Double> {
+    ): WeightedGPAResult {
         val prefs = PrefsHelper(context)
         val years = prefs.getYears()
         val scale = prefs.getScale()
@@ -102,23 +140,42 @@ object YearWeightHelper {
 
         var weightedGPASum = 0.0
         var totalWeight = 0.0
+        val yearsWithData = mutableListOf<Int>()
 
-        // Calculate GPA for each year
+        // First pass: identify years that have data and accumulate raw weights
         for (year in 1..years) {
             val yearGPA = calculateYearGPA(context, semesterManager, year, scale)
             val weight = weights[year] ?: 0.0
 
-            // Only include years with data
             if (yearGPA > 0.0 && weight > 0.0) {
                 weightedGPASum += yearGPA * (weight / 100.0)
                 totalWeight += weight
+                yearsWithData.add(year)
             }
         }
 
-        val normalizedWeight = if (totalWeight > 0) 100.0 / totalWeight else 0.0
-        val weightedGPA = if (totalWeight > 0) weightedGPASum * normalizedWeight else 0.0
+        // Renormalize: scale the partial-weight sum back to 100
+        val normFactor = if (totalWeight > 0) 100.0 / totalWeight else 0.0
+        val weightedGPA = if (totalWeight > 0) weightedGPASum * normFactor else 0.0
 
-        return Pair(weightedGPA, totalWeight)
+        // Build effective (renormalized) weights for years that have data
+        val effectiveWeights: Map<Int, Double> = if (totalWeight > 0) {
+            yearsWithData.associateWith { year ->
+                ((weights[year] ?: 0.0) / totalWeight) * 100.0
+            }
+        } else {
+            emptyMap()
+        }
+
+        val isPartial = yearsWithData.size < years && yearsWithData.isNotEmpty()
+
+        return WeightedGPAResult(
+            weightedGPA = weightedGPA,
+            appliedWeight = totalWeight,
+            effectiveWeights = effectiveWeights,
+            yearsWithData = yearsWithData.toList(),
+            isPartial = isPartial
+        )
     }
 
     /**

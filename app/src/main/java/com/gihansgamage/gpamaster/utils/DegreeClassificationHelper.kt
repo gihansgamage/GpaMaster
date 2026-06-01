@@ -1,5 +1,7 @@
 package com.gihansgamage.gpamaster.utils
 
+import com.gihansgamage.gpamaster.views.GpaScaleBarView
+
 object DegreeClassificationHelper {
 
     data class Classification(
@@ -17,6 +19,53 @@ object DegreeClassificationHelper {
             "percentage" -> getClassificationPercentage(gpa)
             else -> getClassification4Scale(gpa)
         }
+    }
+
+    /**
+     * Returns the ordered list of classification bands for use in [GpaScaleBarView].
+     * Bands are ordered from lowest (index 0) to highest GPA.
+     */
+    fun getBands(scale: String): List<GpaScaleBarView.Band> {
+        return when (scale) {
+            "4.0" -> listOf(
+                GpaScaleBarView.Band(0.0, 2.0,  android.graphics.Color.parseColor("#F44336"), "Below Pass",              "Fail"),
+                GpaScaleBarView.Band(2.0, 3.0,  android.graphics.Color.parseColor("#FFC107"), "General Degree",          "Gen."),
+                GpaScaleBarView.Band(3.0, 3.30, android.graphics.Color.parseColor("#FF9800"), "Second Class (Lower) 2:2","2:2"),
+                GpaScaleBarView.Band(3.30, 3.70,android.graphics.Color.parseColor("#8BC34A"), "Second Class (Upper) 2:1","2:1"),
+                GpaScaleBarView.Band(3.70, 4.0, android.graphics.Color.parseColor("#4CAF50"), "First Class Honours",     "1st")
+            )
+            "5.0" -> listOf(
+                GpaScaleBarView.Band(0.0, 2.5,  android.graphics.Color.parseColor("#F44336"), "Below Pass",              "Fail"),
+                GpaScaleBarView.Band(2.5, 3.5,  android.graphics.Color.parseColor("#FFC107"), "General Degree",          "Gen."),
+                GpaScaleBarView.Band(3.5, 4.0,  android.graphics.Color.parseColor("#FF9800"), "Second Class (Lower) 2:2","2:2"),
+                GpaScaleBarView.Band(4.0, 4.5,  android.graphics.Color.parseColor("#8BC34A"), "Second Class (Upper) 2:1","2:1"),
+                GpaScaleBarView.Band(4.5, 5.0,  android.graphics.Color.parseColor("#4CAF50"), "First Class Honours",     "1st")
+            )
+            "10.0" -> listOf(
+                GpaScaleBarView.Band(0.0, 4.0,  android.graphics.Color.parseColor("#F44336"), "Below Pass",              "Fail"),
+                GpaScaleBarView.Band(4.0, 5.0,  android.graphics.Color.parseColor("#FFC107"), "General Degree",          "Gen."),
+                GpaScaleBarView.Band(5.0, 6.0,  android.graphics.Color.parseColor("#FF9800"), "Second Class (Lower) 2:2","2:2"),
+                GpaScaleBarView.Band(6.0, 7.0,  android.graphics.Color.parseColor("#8BC34A"), "Second Class (Upper) 2:1","2:1"),
+                GpaScaleBarView.Band(7.0, 10.0, android.graphics.Color.parseColor("#4CAF50"), "First Class Honours",     "1st")
+            )
+            "percentage" -> listOf(
+                GpaScaleBarView.Band(0.0,  40.0, android.graphics.Color.parseColor("#F44336"), "Below Pass",              "Fail"),
+                GpaScaleBarView.Band(40.0, 50.0, android.graphics.Color.parseColor("#FFC107"), "General Degree",          "Gen."),
+                GpaScaleBarView.Band(50.0, 60.0, android.graphics.Color.parseColor("#FF9800"), "Second Class (Lower) 2:2","2:2"),
+                GpaScaleBarView.Band(60.0, 70.0, android.graphics.Color.parseColor("#8BC34A"), "Second Class (Upper) 2:1","2:1"),
+                GpaScaleBarView.Band(70.0,100.0, android.graphics.Color.parseColor("#4CAF50"), "First Class Honours",     "1st")
+            )
+            else -> getBands("4.0")
+        }
+    }
+
+    /** Max value for the given scale (used to size the bar). */
+    fun getMaxScale(scale: String): Double = when (scale) {
+        "4.0" -> 4.0
+        "5.0" -> 5.0
+        "10.0" -> 10.0
+        "percentage" -> 100.0
+        else -> 4.0
     }
 
     private fun getClassification4Scale(gpa: Double): Classification {
@@ -159,3 +208,4 @@ object DegreeClassificationHelper {
         }
     }
 }
+

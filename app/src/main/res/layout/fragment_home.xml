@@ -325,12 +325,13 @@
             </androidx.cardview.widget.CardView>
 
             <!-- ================== -->
-            <!-- Degree Classification Card (NEW!) -->
+            <!-- Degree Classification Card -->
             <!-- ================== -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/card_classification"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
                 android:visibility="gone"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
@@ -343,35 +344,29 @@
                     android:padding="24dp">
 
                     <TextView
-                        android:id="@+id/tv_classification_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="First Class Honours 🎓"
-                        android:textSize="18sp"
+                        android:text="🎓 Degree Standing"
+                        android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="4dp" />
+
+                    <com.gihansgamage.gpamaster.views.GpaScaleBarView
+                        android:id="@+id/gpa_scale_bar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="4dp" />
 
                     <TextView
                         android:id="@+id/tv_classification_message"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Outstanding! You're achieving the highest academic standard."
-                        android:textSize="14sp"
-                        android:textColor="@color/black" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginVertical="12dp"
-                        android:background="@android:color/black" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Based on your weighted GPA"
-                        android:textSize="12sp"
-                        android:textColor="@color/black"
+                        android:text=""
+                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary"
                         android:textStyle="italic" />
 
                 </LinearLayout>

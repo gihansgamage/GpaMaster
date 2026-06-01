@@ -11,7 +11,9 @@ import com.gihansgamage.gpamaster.utils.DegreeClassificationHelper
 import com.gihansgamage.gpamaster.utils.GPAHelper
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 import com.gihansgamage.gpamaster.utils.SemesterManager
+import com.gihansgamage.gpamaster.utils.WeightedGPAResult
 import com.gihansgamage.gpamaster.utils.YearWeightHelper
+import com.gihansgamage.gpamaster.views.GpaScaleBarView
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -55,24 +57,18 @@ class HomeFragment : Fragment() {
         binding.tvTotalCredits.text = totalCredits.toInt().toString()
 
         // Calculate weighted GPA (based on year percentages)
-        val (weightedGPA, appliedWeight) = YearWeightHelper.calculateWeightedGPA(
+        val weightedResult = YearWeightHelper.calculateWeightedGPA(
             requireContext(),
             semesterManager
         )
+        val weights = YearWeightHelper.getYearWeights(requireContext())
+        val allWeightsEqual = YearWeightHelper.areWeightsEqual(weights)
 
-        // Show weighted GPA card if different from normal GPA
-        if (weightedGPA > 0.0 && kotlin.math.abs(weightedGPA - overallGPA) > 0.01) {
+        // Show weighted GPA card only when weights are unequal and there is data
+        if (weightedResult.weightedGPA > 0.0 && !allWeightsEqual) {
             binding.cardWeightedGpa.visibility = android.view.View.VISIBLE
-            binding.tvWeightedGpa.text = GPAHelper.formatGPA(weightedGPA, scale)
-
-            // Build year weights description
-            val weights = YearWeightHelper.getYearWeights(requireContext())
-            val weightsText = weights.entries
-                .sortedBy { it.key }
-                .joinToString(", ") { (year, weight) ->
-                    "Y$year: ${String.format("%.0f", weight)}%"
-                }
-            binding.tvWeightedDescription.text = "Based on year percentages ($weightsText)"
+            binding.tvWeightedGpa.text = GPAHelper.formatGPA(weightedResult.weightedGPA, scale)
+            binding.tvWeightedDescription.text = buildWeightedDescription(weightedResult, weights)
         } else {
             binding.cardWeightedGpa.visibility = android.view.View.GONE
         }
@@ -95,21 +91,56 @@ class HomeFragment : Fragment() {
         binding.progressBar.progress = progressPercent
         binding.tvProgressText.text = "$progressPercent% Complete"
 
-        // Show degree classification based on weighted GPA (if available) or normal GPA
-        val gpaForClassification = if (weightedGPA > 0.0 && kotlin.math.abs(weightedGPA - overallGPA) > 0.01) {
-            weightedGPA
+        // Show degree classification bar based on weighted GPA (if available) or normal GPA
+        val gpaForClassification = if (weightedResult.weightedGPA > 0.0 && !allWeightsEqual) {
+            weightedResult.weightedGPA
         } else {
             overallGPA
         }
 
         if (gpaForClassification > 0.0) {
             val classification = DegreeClassificationHelper.getClassification(gpaForClassification, scale)
+            val bands = DegreeClassificationHelper.getBands(scale)
+            val maxScale = DegreeClassificationHelper.getMaxScale(scale)
+
             binding.cardClassification.visibility = android.view.View.VISIBLE
-            binding.tvClassificationTitle.text = classification.title
+            // Reset card to white background — colours are on the bar itself
+            binding.cardClassification.setCardBackgroundColor(android.graphics.Color.WHITE)
+            binding.gpaScaleBar.setData(gpaForClassification, maxScale, bands)
             binding.tvClassificationMessage.text = classification.message
-            binding.cardClassification.setCardBackgroundColor(classification.color)
         } else {
             binding.cardClassification.visibility = android.view.View.GONE
+        }
+    }
+
+    /**
+     * Builds the description text shown below the Weighted GPA value.
+     *
+     * - Full year scenario: "Based on year weights: Y1: 10%, Y2: 20%, Y3: 30%, Y4: 40%"
+     * - Partial year scenario: shows which years have data, the original ratio,
+     *   and the effective renormalized percentages.
+     *   e.g. "Years with data: Y1, Y2 | Original ratio 10:20 → Effective: Y1: 33.3%, Y2: 66.7%"
+     */
+    private fun buildWeightedDescription(
+        result: WeightedGPAResult,
+        fullWeights: Map<Int, Double>
+    ): String {
+        return if (result.isPartial) {
+            val yearsLabel = result.yearsWithData.joinToString(", ") { "Y$it" }
+            val ratioLabel = result.yearsWithData.joinToString(":") { year ->
+                String.format("%.0f", fullWeights[year] ?: 0.0)
+            }
+            val sortedEffective = result.effectiveWeights.entries.sortedBy { it.key }
+            val effectiveLabel = sortedEffective.joinToString(", ") { e: Map.Entry<Int, Double> ->
+                "Y${e.key}: ${String.format("%.1f", e.value)}%"
+            }
+            "Years with data: $yearsLabel | Ratio $ratioLabel \u2192 Effective: $effectiveLabel"
+        } else {
+            val sortedWeights = result.effectiveWeights.entries.sortedBy { it.key }
+            val weightsLabel = sortedWeights.joinToString(", ") { e: Map.Entry<Int, Double> ->
+                "Y${e.key}: ${String.format("%.0f", e.value)}%"
+            }
+            "Based on year weights: $weightsLabel"
         }
     }
 
