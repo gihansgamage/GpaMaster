@@ -20,6 +20,9 @@ import com.gihansgamage.gpamaster.utils.GradeMappingHelper
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 import com.gihansgamage.gpamaster.utils.SemesterManager
 import com.gihansgamage.gpamaster.utils.YearWeightHelper
+import com.gihansgamage.gpamaster.utils.ImportHelper
+import com.gihansgamage.gpamaster.utils.ExportHelper
+import androidx.activity.result.contract.ActivityResultContracts
 
 class SettingsFragment : Fragment() {
 
@@ -27,6 +30,20 @@ class SettingsFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var prefs: PrefsHelper
     private lateinit var semesterManager: SemesterManager
+
+    private val importCsvLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            val result = ImportHelper.importCsv(requireContext(), uri)
+            if (result.isSuccess) {
+                val importedCount = result.getOrNull() ?: 0
+                android.widget.Toast.makeText(requireContext(), "Imported $importedCount subjects successfully!", android.widget.Toast.LENGTH_LONG).show()
+                loadCurrentSettings()
+            } else {
+                val msg = result.exceptionOrNull()?.message ?: "Unknown error"
+                android.widget.Toast.makeText(requireContext(), "Failed to import: $msg", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -73,6 +90,19 @@ class SettingsFragment : Fragment() {
         binding.cardResetData.setOnClickListener { showResetConfirmationDialog() }
         binding.cardAbout.setOnClickListener { showAboutDialog() }
         binding.cardGradeMapping.setOnClickListener { showEditGradeMappingDialog() }
+        binding.cardDownloadTemplate.setOnClickListener { downloadTemplate() }
+        binding.cardImportCsv.setOnClickListener { importCsvLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "application/csv", "text/plain")) }
+    }
+
+    private fun downloadTemplate() {
+        try {
+            val userName = prefs.getUserName()
+            val scale = prefs.getScale()
+            val file = ExportHelper.generateCsvTemplate(requireContext(), userName, scale)
+            ExportHelper.shareFile(requireContext(), file)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(requireContext(), "Failed to generate template: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     // =========================
