@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.gihansgamage.gpamaster"
-    compileSdk = 35
+    compileSdk = 36
 
     buildFeatures {
         dataBinding = true  // Add this line
@@ -17,9 +17,9 @@ android {
     defaultConfig {
         applicationId = "com.gihansgamage.gpamaster"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 4
-        versionName = "4.0"
+        targetSdk = 36
+        versionCode = 6
+        versionName = "6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
