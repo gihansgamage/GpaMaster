@@ -17,6 +17,7 @@ import com.gihansgamage.gpamaster.databinding.FragmentSemestersBinding
 import com.gihansgamage.gpamaster.utils.GPAHelper
 import com.gihansgamage.gpamaster.utils.PrefsHelper
 import com.gihansgamage.gpamaster.utils.SemesterManager
+import com.gihansgamage.gpamaster.utils.AdHelper
 import com.gihansgamage.gpamaster.utils.YearWeightHelper
 import com.gihansgamage.gpamaster.utils.GradeMappingHelper
 
@@ -35,6 +36,9 @@ class SemestersFragment : Fragment() {
         prefs = PrefsHelper(requireContext())
         semesterManager = SemesterManager(requireContext())
 
+        // Load AdMob Banner Ad via AdHelper
+        AdHelper.loadBannerAd(binding.adViewSemesters)
+
         // Initialize semesters if needed
         semesterManager.initializeSemesters()
 
@@ -42,8 +46,14 @@ class SemestersFragment : Fragment() {
         return binding.root
     }
 
+    override fun onPause() {
+        binding.adViewSemesters.pause()
+        super.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
+        binding.adViewSemesters.resume()
         generateSemesterButtons()
     }
 
@@ -225,6 +235,7 @@ class SemestersFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        binding.adViewSemesters.destroy()
         super.onDestroyView()
         _binding = null
     }

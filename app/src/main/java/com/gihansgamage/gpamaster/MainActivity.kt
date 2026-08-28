@@ -3,6 +3,7 @@ package com.gihansgamage.gpamaster
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import com.gihansgamage.gpamaster.utils.AdHelper
 import com.gihansgamage.gpamaster.databinding.ActivityMainBinding
 import com.gihansgamage.gpamaster.fragments.HomeFragment
 import com.gihansgamage.gpamaster.fragments.SemestersFragment
@@ -18,6 +19,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Initialize Google Mobile Ads SDK via AdHelper
+        AdHelper.initialize(this)
 
         prefs = PrefsHelper(this)
 

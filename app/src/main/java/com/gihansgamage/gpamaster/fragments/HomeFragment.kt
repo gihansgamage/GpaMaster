@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
+import com.gihansgamage.gpamaster.utils.AdHelper
 import com.gihansgamage.gpamaster.AllResultsActivity
 import com.gihansgamage.gpamaster.MainActivity
 import com.gihansgamage.gpamaster.SemesterDetailActivity
@@ -31,14 +32,23 @@ class HomeFragment : Fragment() {
         prefs = PrefsHelper(requireContext())
         semesterManager = SemesterManager(requireContext())
 
+        // Load AdMob Banner Ad via AdHelper
+        AdHelper.loadBannerAd(binding.adViewHome)
+
         loadDashboardData()
         setupRefresh()
         setupQuickActions()
         return binding.root
     }
 
+    override fun onPause() {
+        binding.adViewHome.pause()
+        super.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
+        binding.adViewHome.resume()
         loadDashboardData()
     }
 
@@ -329,6 +339,7 @@ class HomeFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        binding.adViewHome.destroy()
         super.onDestroyView()
         _binding = null
     }

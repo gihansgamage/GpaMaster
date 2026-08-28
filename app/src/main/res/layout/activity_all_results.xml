@@ -187,6 +187,16 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- AdMob Banner Ad (Under Export Buttons) -->
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adViewAllResults"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp"
+        app:adSize="BANNER"
+        app:adUnitId="@string/admob_banner_all_results_ad_unit_id" />
+
     <!-- Results List -->
     <ScrollView
         android:layout_width="match_parent"

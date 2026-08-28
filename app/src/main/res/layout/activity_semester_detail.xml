@@ -66,6 +66,16 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- AdMob Banner Ad (Separate under GPA Card) -->
+            <com.google.android.gms.ads.AdView
+                android:id="@+id/adViewSemesterDetail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="16dp"
+                app:adSize="BANNER"
+                app:adUnitId="@string/admob_banner_detail_ad_unit_id" />
+
             <!-- Subjects List -->
             <TextView
                 android:layout_width="wrap_content"

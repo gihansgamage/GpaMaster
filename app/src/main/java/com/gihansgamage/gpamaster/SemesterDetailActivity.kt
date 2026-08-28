@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.gihansgamage.gpamaster.utils.AdHelper
 import com.gihansgamage.gpamaster.adapters.SubjectAdapter
 import com.gihansgamage.gpamaster.databinding.ActivitySemesterDetailBinding
 import com.gihansgamage.gpamaster.models.Subject
@@ -31,6 +32,9 @@ class SemesterDetailActivity : AppCompatActivity() {
         try {
             binding = ActivitySemesterDetailBinding.inflate(layoutInflater)
             setContentView(binding.root)
+
+            // Load AdMob Banner Ad via AdHelper
+            AdHelper.loadBannerAd(binding.adViewSemesterDetail)
 
             prefs = PrefsHelper(this)
             semesterManager = SemesterManager(this)
@@ -316,13 +320,24 @@ class SemesterDetailActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        binding.adViewSemesterDetail.pause()
+        super.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
+        binding.adViewSemesterDetail.resume()
         try {
             loadSubjects()
             updateGPADisplay()
         } catch (e: Exception) {
             Log.e("SemesterDetail", "Error in onResume", e)
         }
+    }
+
+    override fun onDestroy() {
+        binding.adViewSemesterDetail.destroy()
+        super.onDestroy()
     }
 }

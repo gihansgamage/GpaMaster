@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.gihansgamage.gpamaster.utils.AdHelper
 import com.gihansgamage.gpamaster.databinding.ActivityAllResultsBinding
 import com.gihansgamage.gpamaster.utils.ExportHelper
 import com.gihansgamage.gpamaster.utils.GPAHelper
@@ -34,6 +35,9 @@ class AllResultsActivity : AppCompatActivity() {
         binding = ActivityAllResultsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Load AdMob Banner Ad via AdHelper
+        AdHelper.loadBannerAd(binding.adViewAllResults)
+
         prefs = PrefsHelper(this)
         semesterManager = SemesterManager(this)
 
@@ -44,6 +48,21 @@ class AllResultsActivity : AppCompatActivity() {
 
         loadResults()
         setupExportButtons()
+    }
+
+    override fun onPause() {
+        binding.adViewAllResults.pause()
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        binding.adViewAllResults.resume()
+    }
+
+    override fun onDestroy() {
+        binding.adViewAllResults.destroy()
+        super.onDestroy()
     }
 
     private fun loadResults() {

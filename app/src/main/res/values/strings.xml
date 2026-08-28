@@ -4,4 +4,17 @@
     <string name="title_semesters">Semesters</string>
     <string name="title_analytics">Analytics</string>
     <string name="title_settings">Settings</string>
+
+    <!-- Google AdMob Configuration -->
+    <!-- Test App ID: ca-app-pub-3940256099942544~3347511713 -->
+    <!-- Replace with your actual production AdMob App ID and Ad Unit IDs for production builds -->
+    <string name="admob_app_id">ca-app-pub-7622902286389989~1462557762</string>
+    <string name="admob_banner_ad_unit_id">ca-app-pub-7622902286389989/4903109321</string>
+    <string name="admob_banner_home_ad_unit_id">ca-app-pub-7622902286389989/3192345906</string>
+    <string name="admob_banner_semesters_ad_unit_id">ca-app-pub-7622902286389989/9337178352</string>
+    <string name="admob_banner_detail_ad_unit_id">ca-app-pub-7622902286389989/2304866143</string>
+    <string name="admob_banner_all_results_ad_unit_id">ca-app-pub-7622902286389989/1607801491</string>
+
+    <!-- Test Interstitial Ad Unit ID: ca-app-pub-3940256099942544/1033173712 -->
+    <string name="admob_interstitial_ad_unit_id">ca-app-pub-7622902286389989/8650782642</string>
 </resources>
