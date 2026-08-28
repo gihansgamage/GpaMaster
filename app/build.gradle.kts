@@ -1,8 +1,8 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     id("com.google.devtools.ksp") version "2.0.21-1.0.27"
-    id("com.google.dagger.hilt.android") version "2.50" apply false
+    id("com.google.dagger.hilt.android") version "2.50"
 }
 
 android {
@@ -10,16 +10,16 @@ android {
     compileSdk = 36
 
     buildFeatures {
-        dataBinding = true  // Add this line
-        viewBinding = true  // Keep this if you have it
+        dataBinding = true
+        viewBinding = true
     }
 
     defaultConfig {
         applicationId = "com.gihansgamage.gpamaster"
         minSdk = 24
         targetSdk = 36
-        versionCode = 6
-        versionName = "6.0"
+        versionCode = 7
+        versionName = "7.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,7 +40,6 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    // Remove viewBinding if present
 }
 
 dependencies {
@@ -53,10 +52,6 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation(libs.androidx.room.common.jvm)
     implementation("com.google.code.gson:gson:2.10.1")
-
-    // Remove navigation if causing issues
-    // implementation("androidx.navigation:navigation-fragment-ktx:2.7.5")
-    // implementation("androidx.navigation:navigation-ui-ktx:2.7.5")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
